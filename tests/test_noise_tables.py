@@ -1,9 +1,115 @@
 import pytest
 from pint.testsuite.helpers import assert_quantity_almost_equal
 
-from pyna.noise_tables import CoreNoiseTables, JetMixingNoiseTables
+from pyna.noise_tables import (
+    FanNoiseTables, 
+    CoreNoiseTables, 
+    JetMixingNoiseTables
+)
+
+# Fan noise tables
+@pytest.mark.parametrize(
+    "theta, method, directivity_expected",
+    [
+        (0., "kresja", -0.5),
+        (180., "kresja", -73)
+    ]        
+)
+def test_fan_noise_tables_get_inlet_broadband_directivity(theta, method, directivity_expected):
+
+    tables = FanNoiseTables()
+    directivity = tables.get_inlet_broadband_directivity(theta, method)
+    assert_quantity_almost_equal(directivity, directivity_expected)
+
+@pytest.mark.parametrize(
+    "theta, method, directivity_expected",
+    [
+        (0., "alliedsignal", 0),
+        (180., "alliedsignal", -20)
+    ]        
+)
+def test_fan_noise_tables_get_discharge_broadband_directivity(theta, method, directivity_expected):
+    
+    tables = FanNoiseTables()
+    directivity = tables.get_discharge_broadband_directivity(theta, method)
+    assert_quantity_almost_equal(directivity, directivity_expected)
+
+@pytest.mark.parametrize(
+    "theta, method, directivity_expected",
+    [
+        (0., "alliedsignal", -3),
+        (180., "alliedsignal", -40.5)
+    ]        
+)
+def test_fan_noise_tables_get_inlet_tones_directivity(theta, method, directivity_expected):
+    
+    tables = FanNoiseTables()
+    directivity = tables.get_inlet_tones_directivity(theta, method)
+    assert_quantity_almost_equal(directivity, directivity_expected)
+
+@pytest.mark.parametrize(
+    "theta, method, directivity_expected",
+    [
+        (0., "alliedsignal", -34),
+        (180., "alliedsignal", -16)
+    ]        
+)
+def test_fan_noise_tables_get_discharge_tones_directivity(theta, method, directivity_expected):
+    
+    tables = FanNoiseTables()
+    directivity = tables.get_discharge_tones_directivity(theta, method)
+    assert_quantity_almost_equal(directivity, directivity_expected)
+
+@pytest.mark.parametrize(
+    "theta, method, directivity_expected",
+    [
+        (0., "original", "-9.5"),
+        (180., "original", -13.5)
+    ]        
+)
+def test_fan_noise_tables_get_combination_tones_directivity(theta, method, directivity_expected):
+    
+    tables = FanNoiseTables()
+    directivity = tables.get_combination_tones_directivity(theta, method)
+    assert_quantity_almost_equal(directivity, directivity_expected)
+
+@pytest.mark.parametrize(
+    "M_tip, subharmonic, method, tipmach_factor_expected",
+    [
+        (1.67, 1, "original", 68.38880870165691),
+        (1.67, 2, "original", 72.42081345435197),
+        (1.67, 3, "original", 70.40867525444706),
+        (1., 1, "original", 30.0),
+        (1., 2, "original", 30.0),
+        (1., 3, "original", 30.0),
+    ]        
+)
+def test_fan_noise_tables_get_combination_tones_tipmach(M_tip, subharmonic, method, tipmach_factor_expected):
+    
+    tables = FanNoiseTables()
+    tipmach_factor = tables.get_combination_tones_tipmach(M_tip, subharmonic, method)
+    
+    assert_quantity_almost_equal(tipmach_factor, tipmach_factor_expected)
+
+@pytest.mark.parametrize(
+    "f_bpf, subharmonic, method, spectral_distribution_expected",
+    [
+        (0.1, 1, "original", -755.68),
+        (0.1, 2, "original", -361.81),
+        (0.1, 3, "original", -169.2),
+        (1., 1, "original", 30.),
+        (1., 2, "original", 30.),
+        (1., 3, "original", 30.),
+    ]        
+)
+def test_fan_noise_tables_get_combination_tones_spectral_distribution(f_bpf, subharmonic, method, spectral_distribution_expected):
+    
+    tables = FanNoiseTables()
+    spectral_distribution = tables.get_combination_tones_tipmach(f_bpf, subharmonic, method)
+    assert_quantity_almost_equal(spectral_distribution, spectral_distribution_expected)
 
 
+# Core noise tables
 @pytest.mark.parametrize(
     "theta, directivity_expected",
     [
@@ -21,7 +127,7 @@ def test_core_noise_tables_get_directivity(theta, directivity_expected):
 @pytest.mark.parametrize(
     "log10_f_fp, spectral_distribution_expected",
     [
-        (-1.1, 3.87),
+        (-1.1, -3.87),
         (0.0, -0.72),
         (1.6, -6.2)
     ]
@@ -31,6 +137,7 @@ def test_core_noise_tables_get_spectral_distribution(log10_f_fp, spectral_distri
     tables = CoreNoiseTables()
     spectral_distribution = tables.get_spectral_distribution(log10_f_fp)
     assert_quantity_almost_equal(spectral_distribution, spectral_distribution_expected)
+
 
 # Jet mixing noise tables
 @pytest.mark.parametrize(

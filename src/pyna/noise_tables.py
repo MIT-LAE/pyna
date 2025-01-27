@@ -3,18 +3,119 @@ import numpy as np
 from scipy.interpolate import RegularGridInterpolator
 
 
-class NoiseTables:
-    """Class containing noise model data tables
-    """
-    def __init__(self) -> None:
+class FanNoiseTables:
+    
+    def __init__(self):
         
         # Fan noise tables
         with open('tables/source_fan.json', 'r') as file:
             data = json.load(file)
-        self.fan = {key : np.array(data[key]) for key in data.keys()}
+        self.data = {key : np.array(data[key]) for key in data.keys()}
+
+    def get_inlet_broadband_directivity(self, theta, method):
+
+        if method not in ["kresja", "others"]:
+            raise ValueError(f"Method {method} not available for get_inlet_broadband_directivity.")
+
+        return self._get_inlet_broadband_directivity(theta, method)
+    
+    def get_discharge_broadband_directivity(self, theta, method):
+
+        if method not in ["alliedsignal", "kresja", "others"]:
+            raise ValueError(f"Method {method} not available for get_discharge_broadband_directivity.")
+
+        return self._get_discharge_broadband_directivity(theta, method)
+    
+    def get_inlet_tones_directivity(self, theta, method):
+
+        if method not in ["alliedsignal", "kresja", "others"]:
+            raise ValueError(f"Method {method} not available for get_inlet_tones_directivity.")
+
+        return self._get_inlet_tones_directivity(theta, method)
+            
+    def get_discharge_tones_directivity(self, theta, method):
+
+        if method not in ["alliedsignal", "kresja", "others"]:
+            raise ValueError(f"Method {method} not available for get_discharge_tones_directivity.")
+
+        return self._get_discharge_tones_directivity(theta, method)
+
+    def get_combination_tones_directivity(self, theta, method):
+
+        if method not in ["original", "alliedsignal", "geae", "kresja"]:
+            raise ValueError(f"Method {method} not available for get_combination_tones_directivity.")
+
+        return self._get_combination_tones_directivity(theta, method)
+
+    def get_combination_tones_tipmach(self, M_tip, subharmonic, method):
+        
+        if method not in ["original", "alliedsignal", "geae", "kresja"]:
+            raise ValueError(f"Method {method} not available for get_combination_tones_tipmach.")
+
+        return self._get_combination_tones_tipmach(M_tip, subharmonic, method)
+
+    def get_combination_tones_spectral_distribution(self, f_bpf, subharmonic, method):
+        
+        if method not in ["original", "alliedsignal", "geae", "kresja"]:
+            raise ValueError(f"Method {method} not available for get_combination_tones_spectral_distribution.")
+
+        return self._get_combination_tones_spectral_distribution(f_bpf, subharmonic, method)
 
 
-class CoreNoiseTables(NoiseTables):
+    def _get_inlet_broadband_directivity(self, theta, method):
+        return np.interp(
+            theta,
+            self.data[f"inlet_broadband_directivity_{method}_x_0"],
+            self.data[f"inlet_broadband_directivity_{method}_y"]
+            )
+    
+    def _get_discharge_broadband_directivity(self, theta, method):
+        return np.interp(
+            theta,
+            self.data[f"discharge_broadband_directivity_{method}_x_0"],
+            self.data[f"discharge_broadband_directivity_{method}_y"]
+        )
+    
+    def _get_inlet_tones_directivity(self, theta, method):
+        return np.interp(
+            theta,
+            self.data[f"inlet_tones_directivity_{method}_x_0"],
+            self.data[f"inlet_tones_directivity_{method}_y"]
+        )
+    
+    def _get_discharge_tones_directivity(self, theta, method):
+        return np.interp(
+            theta,
+            self.data[f"discharge_tones_directivity_{method}_x_0"],
+            self.data[f"discharge_tones_directivity_{method}_y"]
+        )
+
+    def _get_combination_tones_directivity(self, theta, method):
+        return np.interp(
+            theta,
+            self.data[f"combination_tones_directivity_{method}_x_0"],
+            self.data[f"combination_tones_directivity_{method}_y"]
+        )
+
+    def _get_combination_tones_tipmach(self, M_tip, subharmonic, method):
+        
+        if M_tip < self.data[f"combination_tones_tipmach_{method}"][subharmonic-1]:
+            return self.data[f"combination_tones_tipmach_slope1_{method}"][subharmonic-1] * np.log10(M_tip) + self.data[f"combination_tones_tipmach_offset1_{method}"][subharmonic-1]
+        else:
+            return self.data[f"combination_tones_tipmach_slope2_{method}"][subharmonic-1] * np.log10(M_tip) + self.data[f"combination_tones_tipmach_offset2_{method}"][subharmonic-1]
+
+    def _get_combination_tones_spectral_distribution(self, f_bpf, subharmonic, method):
+        
+        # For frequencies less than the subharmonic:
+        if f_bpf <= 1 / 2**subharmonic:
+            return self.data[f"combination_tones_spectral_offset4_{method}"][subharmonic-1] * np.log10(f_bpf) + self.data[f"combination_tones_spectral_offset4_{method}"][subharmonic-1]
+        
+        # For frequencies greater than the subharmonic:
+        else:
+            return self.data[f"combination_tones_spectral_offset3_{method}"][subharmonic-1] * np.log10(f_bpf) + self.data[f"combination_tones_spectral_offset3_{method}"][subharmonic-1]
+
+
+class CoreNoiseTables:
 
     def __init__(self):
         
@@ -44,7 +145,7 @@ class CoreNoiseTables(NoiseTables):
         return np.interp(log10_f_fp, self.data['spectral_distribution_x_0'], self.data['spectral_distribution_y'])
 
 
-class JetMixingNoiseTables():
+class JetMixingNoiseTables:
 
     def __init__(self):
 
