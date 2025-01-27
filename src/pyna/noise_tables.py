@@ -13,18 +13,46 @@ class NoiseTables:
             data = json.load(file)
         self.fan = {key : np.array(data[key]) for key in data.keys()}
 
+
+class CoreNoiseTables(NoiseTables):
+
+    def __init__(self):
+        
         # Core noise tables
         with open('tables/source_core.json', 'r') as file:
             data = json.load(file)
-        self.core = {key : np.array(data[key]) for key in data.keys()}
+        self.data = {key : np.array(data[key]) for key in data.keys()}
+
+    def get_directivity(self, theta):
+        
+        if theta < 0. or theta > 180.:
+            raise ValueError(f"theta = {theta} is outside the domain of the noise tables [0., 180.].")
+        
+        return self._get_directivity(theta)
+    
+    def get_spectral_distribution(self, log10_f_fp):
+
+        if log10_f_fp < -1.1 or log10_f_fp > 1.6:
+            raise ValueError(f"log10_f_fp = {log10_f_fp} is outside the domain of the noise tables [-1.1, 1.6].")
+
+        return self._get_spectral_distribution(log10_f_fp)
+
+    def _get_directivity(self, theta):
+        return np.interp(theta, self.data['directivity_x_0'], self.data['directivity_y'])
+
+    def _get_spectral_distribution(self, log10_f_fp):
+        return np.interp(log10_f_fp, self.data['spectral_distribution_x_0'], self.data['spectral_distribution_y'])
+
+
+class JetMixingNoiseTables():
+
+    def __init__(self):
 
         # Jet noise tables
         with open('tables/source_jet_mixing.json', 'r') as file:
             data = json.load(file)
-        self.jet_mixing = {key : np.array(data[key]) for key in data.keys()}
+        self.data = {key : np.array(data[key]) for key in data.keys()}
 
-
-class JetMixingNoiseTables(NoiseTables):
 
     def get_density_exponent(self, log10_V_j_star):
         
@@ -102,19 +130,19 @@ class JetMixingNoiseTables(NoiseTables):
 
     def _get_density_exponent(self, log10_V_j_star):
         
-        return np.interp(log10_V_j_star, self.jet_mixing['density_exponent_x_0'], self.jet_mixing['density_exponent_y'])
+        return np.interp(log10_V_j_star, self.data['density_exponent_x_0'], self.data['density_exponent_y'])
 
     def _get_power_deviation_factor(self, log10_V_j_star):
 
         return np.interp(log10_V_j_star, 
-                         self.jet_mixing['power_deviation_factor_x_0'], 
-                         self.jet_mixing['power_deviation_factor_y'])
+                         self.data['power_deviation_factor_x_0'], 
+                         self.data['power_deviation_factor_y'])
 
     def _get_directivity(self, theta, log10_V_j_star):
 
         f_interp = RegularGridInterpolator(
-            (self.jet_mixing['directivity_x_0'], self.jet_mixing['directivity_x_1']), 
-            self.jet_mixing['directivity_y']
+            (self.data['directivity_x_0'], self.data['directivity_x_1']), 
+            self.data['directivity_y']
             )
 
         return  f_interp((theta, log10_V_j_star), method="linear")
@@ -122,8 +150,8 @@ class JetMixingNoiseTables(NoiseTables):
     def _get_strouhal_correction(self, V_j_star, theta):
         
         f_interp = RegularGridInterpolator(
-            (self.jet_mixing['strouhal_correction_x_0'], self.jet_mixing['strouhal_correction_x_1']), 
-            self.jet_mixing['strouhal_correction_y']
+            (self.data['strouhal_correction_x_0'], self.data['strouhal_correction_x_1']), 
+            self.data['strouhal_correction_y']
             )
 
         return f_interp((V_j_star, theta), method="linear")
@@ -131,19 +159,19 @@ class JetMixingNoiseTables(NoiseTables):
     def _get_forward_velocity_index(self, theta):
 
         return np.interp(theta, 
-                         self.jet_mixing['forward_velocity_index_x_0'],
-                         self.jet_mixing['forward_velocity_index_y'])
+                         self.data['forward_velocity_index_x_0'],
+                         self.data['forward_velocity_index_y'])
         
     def _get_spectral_distribution(self, theta, Tt_j_star, log10_V_j_star, log10_St, n_frequency_bands):
         
         f_interp = RegularGridInterpolator(
             (
-                self.jet_mixing['spectral_distribution_x_0'], 
-                self.jet_mixing['spectral_distribution_x_1'], 
-                self.jet_mixing['spectral_distribution_x_2'], 
-                self.jet_mixing['spectral_distribution_x_3'],
+                self.data['spectral_distribution_x_0'], 
+                self.data['spectral_distribution_x_1'], 
+                self.data['spectral_distribution_x_2'], 
+                self.data['spectral_distribution_x_3'],
             ), 
-            self.jet_mixing['spectral_distribution_y'], 
+            self.data['spectral_distribution_y'], 
             )
         
         return f_interp(
