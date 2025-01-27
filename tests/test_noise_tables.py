@@ -4,7 +4,8 @@ from pint.testsuite.helpers import assert_quantity_almost_equal
 from pyna.noise_tables import (
     FanNoiseTables, 
     CoreNoiseTables, 
-    JetMixingNoiseTables
+    JetMixingNoiseTables,
+    JetShockNoiseTables
 )
 
 # Fan noise tables
@@ -230,3 +231,33 @@ def test_jet_mixing_noise_tables_get_forward_velocity_index(theta, forward_veloc
     tables = JetMixingNoiseTables()
     forward_velocity_index = tables.get_forward_velocity_index(theta)
     assert_quantity_almost_equal(forward_velocity_index, forward_velocity_index_expected)
+
+
+# Jet shock noise tables
+@pytest.mark.parametrize(
+    "log10_sigma, correlation_coefficient_spectrum_expected",
+    [
+        (-0.7, 0.703),
+        (0., 0.735),
+        (2.0, 0.015)
+    ]
+)
+def test_jet_shock_noise_tables_get_correlation_coefficient_spectrum(log10_sigma, correlation_coefficient_spectrum_expected):
+
+    tables = JetShockNoiseTables()
+    correlation_coefficient_spectrum = tables.get_correlation_coefficient_spectrum(log10_sigma)
+    assert_quantity_almost_equal(correlation_coefficient_spectrum, correlation_coefficient_spectrum_expected)
+
+@pytest.mark.parametrize(
+    "log10_sigma, group_source_strength_expected",
+    [
+        (0.0, -2.69),
+        (1.0, -1.09),
+        (2.5, -2.90)
+    ]
+)
+def test_jet_shock_noise_tables_get_group_source_strength(log10_sigma, group_source_strength_expected):
+
+    tables = JetShockNoiseTables()
+    group_source_strength = tables.get_group_source_strength_spectrum(log10_sigma)
+    assert_quantity_almost_equal(group_source_strength, group_source_strength_expected)

@@ -285,4 +285,40 @@ class JetMixingNoiseTables:
             method="linear"
             )
 	
-	
+
+class JetShockNoiseTables:
+    
+    def __init__(self):
+        
+        # Fan noise tables
+        with open('tables/source_jet_shock.json', 'r') as file:
+            data = json.load(file)
+        self.data = {key : np.array(data[key]) for key in data.keys()}
+
+    def get_correlation_coefficient_spectrum(self, log10_sigma):
+
+        if log10_sigma < -0.7 or log10_sigma > 2.0:
+            raise ValueError(f"log10_sigma = {log10_sigma} is outside the domain of the noise tables [-0.7, 2.0].")
+        
+        return self._get_correlation_coefficient_spectrum(log10_sigma)
+    
+    def get_group_source_strength_spectrum(self, log10_sigma):
+
+        if log10_sigma < 0. or log10_sigma > 2.5:
+            raise ValueError(f"log10_sigma = {log10_sigma} is outside the domain of the noise tables [0.0, 2.5].")
+
+        return self._get_group_source_strength_spectrum(log10_sigma)
+    
+    def _get_correlation_coefficient_spectrum(self, log10_sigma):
+        return np.interp(
+            log10_sigma, 
+            self.data['correlation_coeficient_spectrum_x_0'], 
+            self.data['correlation_coeficient_spectrum_y']
+        )
+    
+    def _get_group_source_strength_spectrum(self, log10_sigma):
+        return np.interp(
+            log10_sigma, 
+            self.data['group_source_strength_spectrum_x_0'], 
+            self.data['group_source_strength_spectrum_y']
+        )
