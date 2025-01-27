@@ -1,8 +1,13 @@
 import numpy as np
-from pyna.noise_tables import JetMixingNoiseTables
+from pyna.noise_tables import (
+    JetMixingNoiseTables,
+    JetShockNoiseTables
+)
+
+_R_SOURCE = 0.3048
 
 
-def compute_jet_mixing_source_noise(V_j_star, rho_j_star, A_j_star, Tt_j_star, theta, M_0, c_0, f, A_e, p_ref, n_engines):
+def compute_jet_mixing_source_noise(V_j_star, rho_j_star, A_j_star, Tt_j_star, theta, M_0, c_0, f, area_jet_effective, p_ref, n_engines):
     """
     Compute jet mixing noise mean-square acoustic pressure (msap).
 
@@ -24,7 +29,7 @@ def compute_jet_mixing_source_noise(V_j_star, rho_j_star, A_j_star, Tt_j_star, t
 
     f : np.ndarray
 
-    A_e : float
+    area_jet_effective : float
 
     p_ref : float
 
@@ -40,7 +45,7 @@ def compute_jet_mixing_source_noise(V_j_star, rho_j_star, A_j_star, Tt_j_star, t
 
     tables = JetMixingNoiseTables()
 
-    r_s_star = 0.3048 / np.sqrt(A_e)
+    r_s_star = _R_SOURCE / np.sqrt(area_jet_effective)
     jet_delta = 0.
 
     # Calculate density exponent (omega)
@@ -67,8 +72,8 @@ def compute_jet_mixing_source_noise(V_j_star, rho_j_star, A_j_star, Tt_j_star, t
 
     # Calculate Strouhal number (St)
     # Source: Zorumski report 1982 part 2. Chapter 8.4 Eq. 9
-    D_j_star = np.sqrt(4 * A_j_star / np.pi)  # Jet diamater [-] (rel. to sqrt(settings['A_e']))
-    f_star = f * np.sqrt(A_e) / c_0
+    D_j_star = np.sqrt(4 * A_j_star / np.pi)  # Jet diamater [-] (rel. to sqrt(area_jet_effective))
+    f_star = f * np.sqrt(area_jet_effective) / c_0
     St = (f_star * D_j_star) / (xi * (V_j_star - M_0))
 
     # Source: Zorumski report 1982 part 2. Chapter 8.4 Table VI
@@ -87,113 +92,106 @@ def compute_jet_mixing_source_noise(V_j_star, rho_j_star, A_j_star, Tt_j_star, t
     return msap_j * n_engines / p_ref**2
 
 
+def jet_shock_source(V_j_star, M_j, A_j_star, Tt_j_star, theta, M_0, c_0, f, area_jet_effective, p_ref, n_shock, n_engines):
+                     
+    """
+    Compute jet mixing noise mean-square acoustic pressure (msap).
 
-# def jet_shock_source(source, theta, inputs: openmdao.vectors.default_vector.DefaultVector) -> np.ndarray:
-# 	"""
-# 	Compute jet mixing noise mean-square acoustic pressure (msap).
+    Parameters
+    ----------
+    V_j_star : 
+    
+    M_j : 
+    
+    A_j_star : 
+    
+    Tt_j_star : 
+    
+    M_0 : 
+    
+    c_0 : 
 
-# 	:param source:
-# 	:type source:
-# 	:param inputs: unscaled, dimensional input variables read via inputs[key]
-# 	:type inputs: openmdao.vectors.default_vector.DefaultVector
+    f : np.ndarray
+    
+    area_jet_effective : 
+    
+    p_ref : 
 
-# 	:return: msap_jet_shock
-# 	:rtype: [n_t, settings['n_frequency_bands']]
-# 	"""
-# 	# Load options
-# 	settings = source.options['settings']
-# 	data = source.options['data']
-# 	airframe = source.options['airframe']
-# 	n_t = source.options['n_t']
+    n_shock : 
+    
+    n_engines : int
+    
+    Returns
+    -------
+    np.ndarray : 
 
-# 	# Extract inputs
-# 	V_j_star = inputs['V_j_star']
-# 	M_j = inputs['M_j']
-# 	A_j_star = inputs['A_j_star']
-# 	Tt_j_star = inputs['Tt_j_star']
-# 	M_0 = inputs['M_0']
-# 	c_0 = inputs['c_0']
-# 	r_s_star = settings['r_0'] / np.sqrt(settings['A_e'])
-# 	jet_delta = 0.
+    """
 
-# 	# Initialize solution
-# 	msap_jet_shock = np.zeros((n_t, settings['n_frequency_bands']))
+    tables = JetShockNoiseTables()
+    r_s_star = _R_SOURCE / np.sqrt(area_jet_effective)
+    jet_delta = 0.
 
-# 	# Calculate jet shock
-# 	for i in np.arange(n_t):
-# 		# Calculate msap for all frequencies
-# 		# If the jet is supersonic: shock cell noise
-# 		if M_j[i] > 1:
-# 			# Calculate beta function
-# 			# Source: Zorumski report 1982 part 2. Chapter 8.5 Equation 4
-# 			beta = (M_j[i] ** 2 - 1) ** 0.5
+    # Calculate msap for all frequencies
+    # If the jet is supersonic: shock cell noise
+    if M_j > 1:
+        # Calculate beta function
+        # Source: Zorumski report 1982 part 2. Chapter 8.5 Equation 4
+        beta = (M_j ** 2 - 1) ** 0.5
 
-# 			# Calculate eta (exponent of the pressure ratio parameter)
-# 			# Source: Zorumski report 1982 part 2. Chapter 8.5 Equation 5
-# 			if beta > 1:
-# 				if Tt_j_star[i] < 1.1:
-# 					eta = 1.
-# 				else:
-# 					eta = 2.
-# 			else:
-# 				eta = 4.
+        # Calculate eta (exponent of the pressure ratio parameter)
+        # Source: Zorumski report 1982 part 2. Chapter 8.5 Equation 5
+        if beta > 1:
+            if Tt_j_star < 1.1:
+                eta = 1.
+            else:
+                eta = 2.
+        else:
+            eta = 4.
 
-# 			# Calculate f_star
-# 			# Source: Zorumski report 1982 part 2. Chapter 8.5 page 8-5-1 (symbols)
-# 			f_star = data.f * np.sqrt(settings['A_e']) / c_0[i]
+        # Calculate f_star
+        # Source: Zorumski report 1982 part 2. Chapter 8.5 page 8-5-1 (symbols)
+        f_star = f * np.sqrt(area_jet_effective) / c_0
 
-# 			# Calculate sigma parameter
-# 			# Source: Zorumski report 1982 part 2. Chapter 8.5 Equation 3
-# 			sigma = 7.80 * beta * (1 - M_0[i] * np.cos(np.pi / 180 * theta[i])) * np.sqrt(A_j_star[i]) * f_star
-# 			log10sigma = np.log10(sigma)
+        # Calculate sigma parameter
+        # Source: Zorumski report 1982 part 2. Chapter 8.5 Equation 3
+        sigma = 7.80 * beta * (1 - M_0 * np.cos(np.pi / 180 * theta)) * np.sqrt(A_j_star) * f_star
 
-# 			# Calculate C function
-# 			# Source: Zorumski report 1982 part 2. Chapter 8.5 Table II
-# 			array_1_c = np.array([-0.7, -0.6, -0.5, -0.4, -0.3, -0.2, -0.1, 0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 2])
-# 			array_2_c = np.array([0.703, 0.703, 0.71, 0.714, 0.719, 0.724, 0.729, 0.735, 0.74, 0.74, 0.74, 0.735, 0.714,0.681, 0.635, 0.579, 0.52, 0.46, 0.4, 0.345, 0.29, 0.235, 0.195, 0.15, 0.1, 0.06, 0.03, 0.015])
+        # Calculate W function
+        # Source: Zorumski report 1982 part 2. Chapter 8.5 Equation 6-7
+        b = 0.23077
+        W = 0
+        for k in np.arange(1, n_shock):
+            sum_inner = 0
+            for m in np.arange(n_shock - k):
+                # Calculate q_km
+                q_km = 1.70 * k / V_j_star * (1 - 0.06 * (m + (k + 1) / 2)) * (1 + 0.7 * V_j_star * np.cos(np.pi / 180 * theta))
 
-# 			# Calculate W function
-# 			# Source: Zorumski report 1982 part 2. Chapter 8.5 Equation 6-7
-# 			b = 0.23077
-# 			W = 0
-# 			for k in np.arange(1, settings['n_shock']):
-# 				sum_inner = 0
-# 				for m in np.arange(settings['n_shock'] - k):
-# 					# Calculate q_km
-# 					q_km = 1.70 * k / V_j_star[i] * (1 - 0.06 * (m + (k + 1) / 2)) * (1 + 0.7 * V_j_star[i] * np.cos(np.pi / 180 * theta[i]))
+                # Calculate inner sum (note: the factor b in the denominator below the sine should not be there: to get same graph as Figure 4)
+                sum_inner = sum_inner + np.sin((b * sigma * q_km / 2)) / (sigma * q_km) * np.cos(sigma * q_km)
 
-# 					# Calculate inner sum (note: the factor b in the denominator below the sine should not be there: to get same graph as Figure 4)
-# 					sum_inner = sum_inner + np.sin((b * sigma * q_km / 2)) / (sigma * q_km) * np.cos(sigma * q_km)
+            # Compute the correlation coefficient spectrum C
+            # Source: Zorumski report 1982 part 2. Chapter 8.5 Table II
+            C = tables.get_correlation_coefficient_spectrum(np.log10(sigma))
+            # C = 10**log10C
 
-# 				# Compute the correlation coefficient spectrum C
-# 				C = np.interp(log10sigma, array_1_c, array_2_c)
-# 				# C = 10**log10C
+            # Add outer loop to the shock cell interference function
+            W = W + (4. / (n_shock * b))* sum_inner * C ** (k ** 2)
 
-# 				# Add outer loop to the shock cell interference function
-# 				W = W + (4. / (settings['n_shock'] * b))* sum_inner * C ** (k ** 2)
+        # Calculate the H function
+        # Source: Zorumski report 1982 part 2. Chapter 8.5 Table III (+ linear extrapolation in logspace for log10sigma < 0; as given in SAEARP876)
+        log10H = tables.get_group_source_strength_spectrum(np.log10(sigma))
 
-# 			# Calculate the H function
-# 			# Source: Zorumski report 1982 part 2. Chapter 8.5 Table III (+ linear extrapolation in logspace for log10sigma < 0; as given in SAEARP876)
-# 			array_1_H = np.array([-0.8, -0.7, -0.6, -0.5, -0.4, -0.3, -0.2, -0.1, 0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 2, 2.1, 2.2, 2.3, 2.4, 2.5])
-# 			array_2_H = np.array([-5.73, -5.35, -4.97, -4.59, -4.21, -3.83, -3.45, -3.07, -2.69, -2.31, -1.94, -1.59, -1.33,-1.1, -0.94, -0.88, -0.91, -0.99, -1.09, -1.17, -1.3, -1.42, -1.55, -1.67, -1.81, -1.92, -2.06, -2.18, -2.3, -2.42, -2.54, -2.66, -2.78, -2.9])
-# 			log10H = np.interp(log10sigma, array_1_H, array_2_H)
+        # Source: Zorumski report 1982 part 2. Chapter 8.5.4
+        if Tt_j_star < 1.1:
+            log10H = log10H - 0.2
+        H = (10 ** log10H)
 
-# 			# Source: Zorumski report 1982 part 2. Chapter 8.5.4
-# 			if Tt_j_star[i] < 1.1:
-# 				log10H = log10H - 0.2
-# 			H = (10 ** log10H)
+        # Calculate mean-square acoustic pressure (msap)
+        # Source: Zorumski report 1982 part 2. Chapter 8.5 Equation 1
+        msap_j = 1.92e-3 * A_j_star / (4 * np.pi * r_s_star ** 2) * (1 + W) / (1 - M_0 * np.cos(np.pi / 180. * (theta - jet_delta))) ** 4 * beta ** eta * H
+    
+    else:
+        msap_j = np.zeros(f.size) * M_j ** 0
 
-# 			# Calculate mean-square acoustic pressure (msap)
-# 			# Source: Zorumski report 1982 part 2. Chapter 8.5 Equation 1
-# 			msap_j = 1.92e-3 * A_j_star[i] / (4 * np.pi * r_s_star ** 2) * (1 + W) / (1 - M_0[i] * np.cos(np.pi / 180. * (theta[i] - jet_delta))) ** 4 * beta ** eta * H
-# 		else:
-# 			msap_j = np.zeros(settings['n_frequency_bands']) * M_j[i] ** 0
-
-# 		# Multiply with number of engines
-# 		msap_j = msap_j * airframe.n_eng
-
-# 		# Normalize msap by reference pressure
-# 		msap_jet_shock[i,:] = msap_j/settings['p_ref']**2
-
-# 	return msap_jet_shock
-# 
+    # Normalize msap by reference pressure
+    return msap_j * n_engines / p_ref**2
