@@ -1,0 +1,17 @@
+[project]
+name = "pyna"
+version = "0.1.0"
+description = "python aircraft noise assessment module"
+license = {file = "LICENSE.txt" }
+readme = "README.md"
+authors = [
+    {name="Laurens Voet", email="laurens.ja.voet@gmail.com"}
+]
+requires-python = ">=3.12"
+dependencies = [
+    "pytest",
+    "pint",
+    "numpy",
+    "scipy"
+]
+classifiers = ["Private :: Do Not Upload"]

@@ -1,4 +1,4 @@
 .vscode/
 .DS_Store
 .pytest_cache/
-pyna/tests/__pycache__/*
+**/__pycache__/
