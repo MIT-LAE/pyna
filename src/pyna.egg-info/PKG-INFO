@@ -17,5 +17,9 @@ Classifier: Private :: Do Not Upload
 Requires-Python: >=3.12
 Description-Content-Type: text/markdown
 License-File: LICENSE.txt
+Requires-Dist: pytest
+Requires-Dist: pint
 Requires-Dist: numpy
 Requires-Dist: scipy
+Requires-Dist: ipykernel>=6.29.5
+Requires-Dist: matplotlib>=3.10.0
