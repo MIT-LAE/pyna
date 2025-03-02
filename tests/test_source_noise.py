@@ -11,11 +11,11 @@ from pyna.source import (
 from pyna.levels import compute_spl
 
 @pytest.mark.parametrize(
-    "dTt_f_star, mdot_f_star, N_f_star, A_f_star, d_f_star, \
+    "dTt_fan_star, mdot_fan_star, N_fan_star, A_fan_star, d_fan_star, \
      blade_number, vane_number, M_tip_rel_design, rotor_stator_spacing, \
      theta, M_0, c_0, T_0, rho_0, \
      n_harmonics, n_engines, \
-     f, \
+     frequency, \
      method_broadband, method_rotor_stator_interactions, noise_direction, flight_segment, \
      flag_broadband, flag_tones, flag_combination_tones, flag_inlet_distortions, flag_inlet_guide_vanes, flag_liner_suppression, \
      spl_fan_expected", 
@@ -127,21 +127,21 @@ from pyna.levels import compute_spl
          ),
      ]        
 )
-def test_compute_fan_tone_source_noise(dTt_f_star, mdot_f_star, N_f_star, A_f_star, d_f_star,
+def test_compute_fan_tone_source_noise(dTt_fan_star, mdot_fan_star, N_fan_star, A_fan_star, d_fan_star,
                                   blade_number, vane_number, M_tip_rel_design, rotor_stator_spacing,
                                   theta, M_0, c_0, T_0, rho_0,
                                   n_harmonics, n_engines,
-                                  f,
+                                  frequency,
                                   method_broadband, method_rotor_stator_interactions, noise_direction, flight_segment,
                                   flag_broadband, flag_tones, flag_combination_tones, flag_inlet_distortions, flag_inlet_guide_vanes, flag_liner_suppression,
                                   spl_fan_expected):
 
     # Test fan source noise module using 55t Depart-Standard at source time = 67.96 s
-    msap_fan = compute_fan_source_noise(dTt_f_star, mdot_f_star, N_f_star, A_f_star, d_f_star,
+    msap_fan = compute_fan_source_noise(dTt_fan_star, mdot_fan_star, N_fan_star, A_fan_star, d_fan_star,
                                         blade_number, vane_number, M_tip_rel_design, rotor_stator_spacing,
                                         theta, M_0, c_0, T_0, rho_0,
                                         n_harmonics, n_engines,
-                                        f,
+                                        frequency,
                                         method_broadband, method_rotor_stator_interactions, noise_direction, flight_segment, 
                                         flag_broadband, flag_tones, flag_combination_tones, flag_inlet_distortions, flag_inlet_guide_vanes, flag_liner_suppression)
     spl_fan = compute_spl(msap_fan, rho_0, c_0)
@@ -149,11 +149,11 @@ def test_compute_fan_tone_source_noise(dTt_f_star, mdot_f_star, N_f_star, A_f_st
     assert_quantity_almost_equal(spl_fan, spl_fan_expected, atol=3.0)
 
 @pytest.mark.parametrize(
-    "dTt_f_star, mdot_f_star, N_f_star, A_f_star, d_f_star, \
+    "dTt_fan_star, mdot_fan_star, N_fan_star, A_fan_star, d_fan_star, \
      blade_number, vane_number, M_tip_rel_design, rotor_stator_spacing, \
      theta, M_0, c_0, T_0, rho_0, \
      n_harmonics, n_engines, \
-     f, \
+     frequency, \
      method_broadband, method_rotor_stator_interactions, noise_direction, flight_segment, \
      flag_broadband, flag_tones, flag_combination_tones, flag_inlet_distortions, flag_inlet_guide_vanes, flag_liner_suppression, \
      spl_fan_expected", 
@@ -265,21 +265,21 @@ def test_compute_fan_tone_source_noise(dTt_f_star, mdot_f_star, N_f_star, A_f_st
          ),
      ]        
 )
-def test_compute_fan_broadband_source_noise(dTt_f_star, mdot_f_star, N_f_star, A_f_star, d_f_star,
+def test_compute_fan_broadband_source_noise(dTt_fan_star, mdot_fan_star, N_fan_star, A_fan_star, d_fan_star,
                                   blade_number, vane_number, M_tip_rel_design, rotor_stator_spacing,
                                   theta, M_0, c_0, T_0, rho_0,
                                   n_harmonics, n_engines,
-                                  f,
+                                  frequency,
                                   method_broadband, method_rotor_stator_interactions, noise_direction, flight_segment,
                                   flag_broadband, flag_tones, flag_combination_tones, flag_inlet_distortions, flag_inlet_guide_vanes, flag_liner_suppression,
                                   spl_fan_expected):
 
     # Test fan source noise module using 55t Depart-Standard at source time = 67.96 s
-    msap_fan = compute_fan_source_noise(dTt_f_star, mdot_f_star, N_f_star, A_f_star, d_f_star,
+    msap_fan = compute_fan_source_noise(dTt_fan_star, mdot_fan_star, N_fan_star, A_fan_star, d_fan_star,
                                         blade_number, vane_number, M_tip_rel_design, rotor_stator_spacing,
                                         theta, M_0, c_0, T_0, rho_0,
                                         n_harmonics, n_engines,
-                                        f,
+                                        frequency,
                                         method_broadband, method_rotor_stator_interactions, noise_direction, flight_segment, 
                                         flag_broadband, flag_tones, flag_combination_tones, flag_inlet_distortions, flag_inlet_guide_vanes, flag_liner_suppression)
     spl_fan = compute_spl(msap_fan, rho_0, c_0)
@@ -288,7 +288,7 @@ def test_compute_fan_broadband_source_noise(dTt_f_star, mdot_f_star, N_f_star, A
 
 
 @pytest.mark.parametrize(
-    "mdot_i_c_star, Tt_i_c_star, Tt_j_c_star, Pt_i_c_star, DTt_design_c_star, theta, M_0, c_0, rho_0, f, n_engines, spl_core_expected",
+    "mdot_combustor_inlet_star, Tt_combustor_inlet_star, Tt_combustor_outlet_star, Pt_combustor_inlet_star, dTt_combustor_design_star, theta, M_0, c_0, rho_0, frequency, n_engines, spl_core_expected",
     [
         (
             0.075252, 
@@ -349,17 +349,17 @@ def test_compute_fan_broadband_source_noise(dTt_f_star, mdot_f_star, N_f_star, A
         )
     ]
 )                               
-def test_compute_core_source_noise(mdot_i_c_star, Tt_i_c_star, Tt_j_c_star, Pt_i_c_star, DTt_design_c_star, theta, M_0, c_0, rho_0, f, n_engines, spl_core_expected):
+def test_compute_core_source_noise(mdot_combustor_inlet_star, Tt_combustor_inlet_star, Tt_combustor_outlet_star, Pt_combustor_inlet_star, dTt_combustor_design_star, theta, M_0, c_0, rho_0, frequency, n_engines, spl_core_expected):
 
     # Test core source noise module using 55t Depart-Standard at source time = 67.96 s
-    msap_core = compute_core_source_noise(mdot_i_c_star, Tt_i_c_star, Tt_j_c_star, Pt_i_c_star, DTt_design_c_star, theta, M_0, f, n_engines)
+    msap_core = compute_core_source_noise(mdot_combustor_inlet_star, Tt_combustor_inlet_star, Tt_combustor_outlet_star, Pt_combustor_inlet_star, dTt_combustor_design_star, theta, M_0, frequency, n_engines)
     spl_core = compute_spl(msap_core, rho_0, c_0)
 
     assert_quantity_almost_equal(spl_core, spl_core_expected, atol=5.2e-1)
 
 
 @pytest.mark.parametrize(
-    "V_j_star, rho_j_star, A_j_star, Tt_j_star, theta, delta, M_0, c_0, rho_0, f, n_engines, spl_jet_mixing_expected",
+    "V_jet_star, rho_jet_star, A_jet_star, Tt_jet_star, theta, delta_jet, M_0, c_0, rho_0, frequency, n_engines, spl_jet_mixing_expected",
     [
         (
             1.0585, 
@@ -420,17 +420,17 @@ def test_compute_core_source_noise(mdot_i_c_star, Tt_i_c_star, Tt_j_c_star, Pt_i
         )
     ]
 )                                      
-def test_compute_jet_mixing_source_noise(V_j_star, rho_j_star, A_j_star, Tt_j_star, theta, delta, M_0, c_0, rho_0, f, n_engines, spl_jet_mixing_expected):
+def test_compute_jet_mixing_source_noise(V_jet_star, rho_jet_star, A_jet_star, Tt_jet_star, theta, delta_jet, M_0, c_0, rho_0, frequency, n_engines, spl_jet_mixing_expected):
 
     # Test jet mixing source noise module using 55t Depart-Standard at source time = 67.96 s
-    msap_jet_mixing = compute_jet_mixing_source_noise(V_j_star, rho_j_star, A_j_star, Tt_j_star, theta, delta, M_0, c_0, f, n_engines)
+    msap_jet_mixing = compute_jet_mixing_source_noise(V_jet_star, rho_jet_star, A_jet_star, Tt_jet_star, theta, delta_jet, M_0, c_0, frequency, n_engines)
     spl_jet_mixing = compute_spl(msap_jet_mixing, rho_0, c_0)
 
     assert_quantity_almost_equal(spl_jet_mixing, spl_jet_mixing_expected, atol=1e-1)
 
 
 @pytest.mark.parametrize(
-    "V_j_star, M_j_star, A_j_star, Tt_j_star, theta, delta, M_0, c_0, rho_0, f, n_engines, n_shock, msap_jet_shock_expected",
+    "V_jet_star, M_j_star, A_jet_star, Tt_jet_star, theta, delta_jet, M_0, c_0, rho_0, frequency, n_engines, n_shock, msap_jet_shock_expected",
     [
         (1.0585, 
          1.2, 
@@ -458,9 +458,9 @@ def test_compute_jet_mixing_source_noise(V_j_star, rho_j_star, A_j_star, Tt_j_st
         )
     ]
 )
-def test_compute_jet_shock_source_noise(V_j_star, M_j_star, A_j_star, Tt_j_star, theta, delta, M_0, c_0, rho_0, f, n_engines, n_shock, msap_jet_shock_expected):
+def test_compute_jet_shock_source_noise(V_jet_star, M_j_star, A_jet_star, Tt_jet_star, theta, delta_jet, M_0, c_0, rho_0, frequency, n_engines, n_shock, msap_jet_shock_expected):
 
-    msap_jet_shock = compute_jet_shock_source_noise(V_j_star, M_j_star, A_j_star, Tt_j_star, theta, delta, M_0, c_0, f, n_engines, n_shock)
+    msap_jet_shock = compute_jet_shock_source_noise(V_jet_star, M_j_star, A_jet_star, Tt_jet_star, theta, delta_jet, M_0, c_0, frequency, n_engines, n_shock)
     spl_jet_shock = compute_spl(msap_jet_shock, rho_0, c_0)
 
     assert_quantity_almost_equal(spl_jet_shock, msap_jet_shock_expected)

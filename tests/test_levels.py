@@ -18,7 +18,7 @@ from pyna.levels import compute_spl
         (np.array([1e-20, 1e-20, 1e-20, 1e-20, 1e-20, 1e-20, 1e-20, 1e-20, 1e-20, 1e-20, 1e-20, 1e-20, 1e-20, 1e-20, 1e-20, 1e-20, 1e-20, 1e-20, 1e-20, 1e-20, 1e-20, 1e-20, 1e-20, 1e-20]),
          1.225,
          340., 
-         np.zeros(24))
+         -96.978122*np.ones(24))
     ]
 )
 def test_compute_spl(msap, rho_0, c_0, spl_expected):

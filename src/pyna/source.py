@@ -500,7 +500,7 @@ def compute_discharge_tone_level(temperature_term, M_tip, M_tip_rel_design, roto
     return temperature_term + tipmach_term + rotorstator_term + directivity + igv_term
 
 
-def calculate_inlet_harmonics(inlet_tones, M_tip, M_tip_tangential, blade_number, vane_number, n_harmonics, theta, bpf, f, method_rotor_stator_interactions, flight_segment, flag_inlet_distortions, flag_inlet_guide_vanes):
+def calculate_inlet_harmonics(inlet_tones, M_tip, M_tip_tangential, blade_number, vane_number, n_harmonics, theta, blade_pass_frequency, frequency, method_rotor_stator_interactions, flight_segment, flag_inlet_distortions, flag_inlet_guide_vanes):
     """
     Compute fan tone harmonics for inlet (dp) and discharge (dpx).
 
@@ -515,9 +515,9 @@ def calculate_inlet_harmonics(inlet_tones, M_tip, M_tip_tangential, blade_number
 
     tables = FanNoiseTables()
 
-    # Assign discrete interaction tones at bpf and harmonics to proper bins (see figures 8 and 9):
+    # Assign discrete interaction tones at blade_pass_frequency and harmonics to proper bins (see figures 8 and 9):
     # Initialize solution matrices
-    dp = np.zeros(f.size)
+    dp = np.zeros(frequency.size)
     
     i_cutoff = get_cutoff(M_tip_tangential, blade_number, vane_number)
 
@@ -657,8 +657,8 @@ def calculate_inlet_harmonics(inlet_tones, M_tip, M_tip_tangential, blade_number
         f_1, f_2, f_3, f_4 = tables.get_filter_constants(filter_bandwidth=1.)
 
         nfi = 1
-        for l in np.arange(nfi - 1, f.size):
-            f_ratio = bpf * i_harmonic / f[l]
+        for l in np.arange(nfi - 1, frequency.size):
+            f_ratio = blade_pass_frequency * i_harmonic / frequency[l]
             FR = 1
             if f_ratio < f_1:
                 break
@@ -676,7 +676,7 @@ def calculate_inlet_harmonics(inlet_tones, M_tip, M_tip_tangential, blade_number
     return dp
 
 
-def calculate_discharge_harmonics(discharge_tones, M_tip, M_tip_tangential, blade_number, vane_number, n_harmonics, bpf, f, method_rotor_stator_interactions, flag_inlet_guide_vanes):
+def calculate_discharge_harmonics(discharge_tones, M_tip, M_tip_tangential, blade_number, vane_number, n_harmonics, blade_pass_frequency, frequency, method_rotor_stator_interactions, flag_inlet_guide_vanes):
     """
     Compute fan tone harmonics for inlet (dp) and discharge (dpx).
 
@@ -691,9 +691,9 @@ def calculate_discharge_harmonics(discharge_tones, M_tip, M_tip_tangential, blad
 
     tables = FanNoiseTables()
 
-    # Assign discrete interaction tones at bpf and harmonics to proper bins (see figures 8 and 9):
+    # Assign discrete interaction tones at blade_pass_frequency and harmonics to proper bins (see figures 8 and 9):
     # Initialize solution matrices
-    dpx = np.zeros(f.size)
+    dpx = np.zeros(frequency.size)
 
     i_cutoff = get_cutoff(M_tip_tangential, blade_number, vane_number)
 
@@ -825,8 +825,8 @@ def calculate_discharge_harmonics(discharge_tones, M_tip, M_tip_tangential, blad
         f_1, f_2, f_3, f_4 = tables.get_filter_constants(filter_bandwidth=1.)
 
         nfi = 1
-        for l in np.arange(nfi - 1, f.size):
-            f_ratio = bpf * i_harmonic / f[l]
+        for l in np.arange(nfi - 1, frequency.size):
+            f_ratio = blade_pass_frequency * i_harmonic / frequency[l]
             FR = 1
             if f_ratio < f_1:
                 break
@@ -844,7 +844,7 @@ def calculate_discharge_harmonics(discharge_tones, M_tip, M_tip_tangential, blad
     return dpx
 
 
-def compute_combination_tone_level(temperature_term, M_tip, theta, bpf, f, method_rotor_stator_interactions, flag_inlet_guide_vanes):
+def compute_combination_tone_level(temperature_term, M_tip, theta, blade_pass_frequency, frequency, method_rotor_stator_interactions, flag_inlet_guide_vanes):
     """
     Compute the combination tone component of the fan mean-square acoustic pressure (msap).
 
@@ -862,9 +862,9 @@ def compute_combination_tone_level(temperature_term, M_tip, theta, bpf, f, metho
 
     theta : float
 
-    bpf : float
+    blade_pass_frequency : float
 
-    f : np.ndarray
+    frequency : np.ndarray
 
     method_rotor_stator_interactions : str
 
@@ -879,7 +879,7 @@ def compute_combination_tone_level(temperature_term, M_tip, theta, bpf, f, metho
     tables = FanNoiseTables()
 
     # Initialize solution matrices
-    dcp = np.zeros(f.size)
+    dcp = np.zeros(frequency.size)
 
     if M_tip >= 1:
 
@@ -891,19 +891,19 @@ def compute_combination_tone_level(temperature_term, M_tip, theta, bpf, f, metho
         else:
             igv_term = 0
 
-        # Loop through the three sub-bpf terms (k = 1; 1/2 bpf term, k = 2; 1/4 bpf term, k = 3; 1/8 bpf term)
+        # Loop through the three sub-blade_pass_frequency terms (k = 1; 1/2 blade_pass_frequency term, k = 2; 1/4 blade_pass_frequency term, k = 3; 1/8 blade_pass_frequency term)
         for k in np.arange(1, 4):
             
             # Tip Mach-dependent term (F1 of Eqn 8 in Heidmann report, Figure 15A)
             tipmach_term = tables.get_combination_tones_tipmach(M_tip, k, method_rotor_stator_interactions)
             
             # Cycle through frequencies and make assignments:
-            for j in np.arange(f.size):
+            for j in np.arange(frequency.size):
                 # Frequency-dependent term (F3 of Eqn 9, Figure 14):
 
-                spectral_term = tables.get_combination_tones_spectral_distribution(f[j] / bpf, k, method_rotor_stator_interactions)
+                spectral_term = tables.get_combination_tones_spectral_distribution(frequency[j] / blade_pass_frequency, k, method_rotor_stator_interactions)
 
-                # Be sure to add the three sub-bpf components together at each frequency:
+                # Be sure to add the three sub-blade_pass_frequency components together at each frequency:
                 dcp[j] = dcp[j] + 10 ** (0.1 * (temperature_term + tipmach_term + directivity + igv_term + spectral_term))
 
     return dcp
@@ -941,44 +941,44 @@ def get_cutoff(M_tip_tangential, blade_number, vane_number):
         return 0
 
 
-def compute_fan_inlet_spectral_distribution(bpf, f, method_broadband):
+def compute_fan_inlet_spectral_distribution(blade_pass_frequency, frequency, method_broadband):
     
     # Spectral distribution
     match method_broadband:
         case 'alliedsignal':
-            spectral_distribution = 2.445096095 * (np.log(f / bpf / 2)) ** 2
-            spectral_distribution[f/bpf > 2] = (13.97197769 * (np.log(f / bpf / 2)) ** 2)[f/bpf > 2]
+            spectral_distribution = 2.445096095 * (np.log(frequency / blade_pass_frequency / 2)) ** 2
+            spectral_distribution[frequency/blade_pass_frequency > 2] = (13.97197769 * (np.log(frequency / blade_pass_frequency / 2)) ** 2)[frequency/blade_pass_frequency > 2]
 
         case 'kresja':
-            spectral_distribution = 3.4929944 * (np.log(f / bpf / 4)) ** 2
+            spectral_distribution = 3.4929944 * (np.log(frequency / blade_pass_frequency / 4)) ** 2
 
         case _:
-            spectral_distribution = 3.4929944 * (np.log(f / bpf / 2.5)) ** 2
+            spectral_distribution = 3.4929944 * (np.log(frequency / blade_pass_frequency / 2.5)) ** 2
 
     return spectral_distribution
 
 
-def compute_fan_discharge_spectral_distribution(bpf, f, method_broadband):
+def compute_fan_discharge_spectral_distribution(blade_pass_frequency, frequency, method_broadband):
     
     # Spectral distribution
     match method_broadband:
         case 'alliedsignal':
-            spectral_distribution[f/bpf > 2] = (13.97197769 * (np.log(f / bpf / 2)) ** 2)[f/bpf > 2]
+            spectral_distribution[frequency/blade_pass_frequency > 2] = (13.97197769 * (np.log(frequency / blade_pass_frequency / 2)) ** 2)[frequency/blade_pass_frequency > 2]
             
         case 'kresja':
-            spectral_distribution = 3.4929944 * (np.log(f / bpf / 2.5)) ** 2
+            spectral_distribution = 3.4929944 * (np.log(frequency / blade_pass_frequency / 2.5)) ** 2
 
         case _:
-            spectral_distribution = 3.4929944 * (np.log(f / bpf / 2.5)) ** 2
+            spectral_distribution = 3.4929944 * (np.log(frequency / blade_pass_frequency / 2.5)) ** 2
 
     return spectral_distribution
 
 
-def compute_fan_source_noise(dTt_f_star, mdot_f_star, N_f_star, A_f_star, d_f_star, 
+def compute_fan_source_noise(dTt_fan_star, mdot_fan_star, N_fan_star, A_fan_star, d_fan_star, 
                              blade_number, vane_number, M_tip_rel_design, rotor_stator_spacing, 
                              theta, M_0, c_0, T_0, rho_0, 
                              n_harmonics, n_engines, 
-                             f,
+                             frequency,
                              method_broadband, method_rotor_stator_interactions, noise_direction, flight_segment,
                              flag_broadband, flag_tones, flag_combination_tones, flag_inlet_distortions, flag_inlet_guide_vanes, flag_liner_suppression):
     """
@@ -986,15 +986,15 @@ def compute_fan_source_noise(dTt_f_star, mdot_f_star, N_f_star, A_f_star, d_f_st
 
     Parameters
     ----------
-    dTt_f_star : float
+    dTt_fan_star : float
 
-    mdot_f_star : float
+    mdot_fan_star : float
 
-    N_f_star : float
+    N_fan_star : float
 
-    A_f_star : float
+    A_fan_star : float
 
-    d_f_star : float
+    d_fan_star : float
 
     blade_number : int
      
@@ -1018,7 +1018,7 @@ def compute_fan_source_noise(dTt_f_star, mdot_f_star, N_f_star, A_f_star, d_f_st
 
     n_engines : int
 
-    f : np.ndarray
+    frequency : np.ndarray
 
     method_broadband : str
     
@@ -1049,12 +1049,12 @@ def compute_fan_source_noise(dTt_f_star, mdot_f_star, N_f_star, A_f_star, d_f_st
     tables = FanNoiseTables()
 
     ### Dimensionalize the inputs
-    temperature_rise = dTt_f_star * T_0  # [K]
-    rpm = N_f_star * 60 * c_0 / (d_f_star * np.sqrt(_A_REF))  # [rpm]
-    M_tip_tangential = (d_f_star * np.sqrt(_A_REF) / 2) * rpm * 2 * np.pi / 60 / c_0
-    mdot_fan = mdot_f_star * rho_0 * c_0 * _A_REF  # [kg/s]
-    bpf = rpm * blade_number / 60. / (1 - M_0 * np.cos(theta * np.pi / 180))  # [Hz]
-    M_flow = mdot_fan / (rho_0 * A_f_star * _A_REF * c_0)
+    temperature_rise = dTt_fan_star * T_0  # [K]
+    rpm = N_fan_star * 60 * c_0 / (d_fan_star * np.sqrt(_A_REF))  # [rpm]
+    M_tip_tangential = (d_fan_star * np.sqrt(_A_REF) / 2) * rpm * 2 * np.pi / 60 / c_0
+    mdot_fan = mdot_fan_star * rho_0 * c_0 * _A_REF  # [kg/s]
+    blade_pass_frequency = rpm * blade_number / 60. / (1 - M_0 * np.cos(theta * np.pi / 180))  # [Hz]
+    M_flow = mdot_fan / (rho_0 * A_fan_star * _A_REF * c_0)
     M_tip = (M_tip_tangential ** 2 + M_flow ** 2) ** 0.5
 
     # Temperature-flow power base term:
@@ -1070,33 +1070,33 @@ def compute_fan_source_noise(dTt_f_star, mdot_f_star, N_f_star, A_f_star, d_f_st
         case "inlet":
             if flag_broadband:
                 broadband_level = compute_inlet_broadband_level(temperature_term, M_tip, M_tip_rel_design, rotor_stator_spacing, theta, method_broadband, flag_inlet_distortions)
-                spectral_distribution = compute_fan_inlet_spectral_distribution(bpf, f, method_broadband)
+                spectral_distribution = compute_fan_inlet_spectral_distribution(blade_pass_frequency, frequency, method_broadband)
                 msap += 10 ** (0.1 * (broadband_level - spectral_distribution))
 
             if flag_tones:
                 tone_level = compute_inlet_tone_level(temperature_term, M_tip, M_tip_rel_design, rotor_stator_spacing, theta, method_rotor_stator_interactions, flag_inlet_distortions)
-                harmonics = calculate_inlet_harmonics(tone_level, M_tip, M_tip_tangential, blade_number, vane_number, n_harmonics, theta, bpf, f, method_rotor_stator_interactions, flight_segment, flag_inlet_distortions, flag_inlet_guide_vanes)
+                harmonics = calculate_inlet_harmonics(tone_level, M_tip, M_tip_tangential, blade_number, vane_number, n_harmonics, theta, blade_pass_frequency, frequency, method_rotor_stator_interactions, flight_segment, flag_inlet_distortions, flag_inlet_guide_vanes)
                 msap += harmonics
 
         case "discharge":
             if flag_broadband:
                 broadband_level = compute_discharge_broadband_level(temperature_term, M_tip, M_tip_rel_design, rotor_stator_spacing, theta, method_broadband, flag_inlet_distortions, flag_inlet_guide_vanes)
-                spectral_distribution = compute_fan_discharge_spectral_distribution(bpf, f, method_broadband)
+                spectral_distribution = compute_fan_discharge_spectral_distribution(blade_pass_frequency, frequency, method_broadband)
                 msap += 10 ** (0.1 * (broadband_level - spectral_distribution))
             
             if flag_tones:
                 tone_level = compute_discharge_tone_level(temperature_term, M_tip, M_tip_rel_design, rotor_stator_spacing, theta, method_rotor_stator_interactions, flag_inlet_distortions, flag_inlet_guide_vanes)
-                harmonics = calculate_discharge_harmonics(tone_level, M_tip, M_tip_tangential, blade_number, vane_number, n_harmonics, bpf, f, method_rotor_stator_interactions, flag_inlet_guide_vanes)
+                harmonics = calculate_discharge_harmonics(tone_level, M_tip, M_tip_tangential, blade_number, vane_number, n_harmonics, blade_pass_frequency, frequency, method_rotor_stator_interactions, flag_inlet_guide_vanes)
                 msap += harmonics
             
     # Compute combination tones
     if flag_combination_tones and M_tip > 0:
-        combination_tone_level = compute_combination_tone_level(temperature_term, M_tip, theta, bpf, f, method_rotor_stator_interactions, flag_inlet_guide_vanes)
+        combination_tone_level = compute_combination_tone_level(temperature_term, M_tip, theta, blade_pass_frequency, frequency, method_rotor_stator_interactions, flag_inlet_guide_vanes)
         msap += combination_tone_level
             
     # Fan liner suppression
     if flag_liner_suppression:
-        msap *= tables.get_liner_suppression(f, theta, noise_direction)
+        msap *= tables.get_liner_suppression(frequency, theta, noise_direction)
 
     # Multiply for number of engines
     return msap * n_engines
@@ -1109,21 +1109,21 @@ def compute_fan_source_noise(dTt_f_star, mdot_f_star, N_f_star, A_f_star, d_f_st
     # return msap_fan
 
 
-def compute_core_source_noise(mdot_i_c_star, Tt_i_c_star, Tt_j_c_star, Pt_i_c_star, DTt_design_c_star, theta, M_0, f, n_engines):
+def compute_core_source_noise(mdot_combustor_inlet_star, Tt_combustor_inlet_star, Tt_combustor_outlet_star, Pt_combustor_inlet_star, dTt_combustor_design_star, theta, M_0, frequency, n_engines):
     """
 	Compute core noise mean-square acoustic pressure (msap).
 
 	Parameters
 	----------
-	mdot_i_c_star : float
+	mdot_combustor_inlet_star : float
     
-    Tt_i_c_star : float
+    Tt_combustor_inlet_star : float
     
-    Tt_j_c_star : float
+    Tt_combustor_outlet_star : float
     
-    Pt_i_c_star : float
+    Pt_combustor_inlet_star : float
     
-    DTt_design_c_star : float
+    dTt_combustor_design_star : float
     
     theta : float
     
@@ -1131,7 +1131,7 @@ def compute_core_source_noise(mdot_i_c_star, Tt_i_c_star, Tt_j_c_star, Pt_i_c_st
     
     c_0 : float
     
-    f : np.ndarray
+    frequency : np.ndarray
     
     n_engines : int
 	
@@ -1151,7 +1151,7 @@ def compute_core_source_noise(mdot_i_c_star, Tt_i_c_star, Tt_j_c_star, Pt_i_c_st
     # Turbine transmission loss function
     # Source: Zorumski report 1982 part 2. Chapter 8.2 Equation 3
     # if settings['core_turbine_attenuation_method'] == 'ge':
-    g_TT = DTt_design_c_star ** (-4)
+    g_TT = dTt_combustor_design_star ** (-4)
     # Source: Hultgren, 2012: A comparison of combustor models Equation 6
     # elif settings['core_turbine_attenuation_method'] == 'pw':
     #     zeta = (rho_te_c_star[i] * c_te_c_star[i]) / (rho_ti_c_star[i] * c_ti_c_star[i])
@@ -1161,7 +1161,7 @@ def compute_core_source_noise(mdot_i_c_star, Tt_i_c_star, Tt_j_c_star, Pt_i_c_st
 
     # Calculate acoustic power (Pi_star)
     # Source Zorumski report 1982 part 2. Chapter 8.2 Equation 3
-    Pi_star = 8.85e-7 * (mdot_i_c_star / A_c_star) * ((Tt_j_c_star - Tt_i_c_star) / Tt_i_c_star) ** 2 * Pt_i_c_star ** 2 * g_TT
+    Pi_star = 8.85e-7 * (mdot_combustor_inlet_star / A_c_star) * ((Tt_combustor_outlet_star - Tt_combustor_inlet_star) / Tt_combustor_inlet_star) ** 2 * Pt_combustor_inlet_star ** 2 * g_TT
 
     # Calculate directivity function (D)
     # Take the D function as SAE ARP876E Table 18 and all other values which are not in the table from Zorumski report 1982 part 2. Chapter 8.2 Table II
@@ -1172,7 +1172,7 @@ def compute_core_source_noise(mdot_i_c_star, Tt_i_c_star, Tt_j_c_star, Pt_i_c_st
     f_p = 400. / (1 - M_0 * np.cos(theta * np.pi / 180.))
 
     # Take the S function as SAE ARP876E Table 17 and all other values which are not in the table from Zorumski report 1982 part 2. Chapter 8.2 Table III
-    spectral_distribution = 10 ** tables.get_spectral_distribution(np.log10(f/f_p))
+    spectral_distribution = 10 ** tables.get_spectral_distribution(np.log10(frequency/f_p))
 
     # Calculate mean-square acoustic pressure (msap)
     # Source Zorumski report 1982 part 2. Chapter 8.2 Equation 1
@@ -1185,29 +1185,29 @@ def compute_core_source_noise(mdot_i_c_star, Tt_i_c_star, Tt_j_c_star, Pt_i_c_st
     return msap/_P_REF**2
 
 
-def compute_jet_mixing_source_noise(V_j_star, rho_j_star, A_j_star, Tt_j_star, theta, delta, M_0, c_0, f, n_engines):
+def compute_jet_mixing_source_noise(V_jet_star, rho_jet_star, A_jet_star, Tt_jet_star, theta, delta_jet, M_0, c_0, frequency, n_engines):
     """
     Compute jet mixing noise mean-square acoustic pressure (msap).
 
     Parameters
     ----------
-    V_j_star : float
+    V_jet_star : float
 
-    rho_j_star : float
+    rho_jet_star : float
 
-    A_j_star : float
+    A_jet_star : float
 
-    Tt_j_star : float
+    Tt_jet_star : float
 
     theta : float
 
-    delta : float
+    delta_jet : float
 
     M_0 : float
 
     c_0 : float
 
-    f : np.ndarray
+    frequency : np.ndarray
 
     n_engines: int
 
@@ -1225,33 +1225,33 @@ def compute_jet_mixing_source_noise(V_j_star, rho_j_star, A_j_star, Tt_j_star, t
 
     # Calculate density exponent (omega)
     # Source: Zorumski report 1982 part 2. Chapter 8.4 Table II
-    omega = tables.get_density_exponent(np.log10(V_j_star))
+    omega = tables.get_density_exponent(np.log10(V_jet_star))
 
     # Calculate power deviation factor (P)
     # Source: Zorumski report 1982 part 2. Chapter 8.4 Table III
-    p = 10**tables.get_power_deviation_factor(np.log10(V_j_star))
+    p = 10**tables.get_power_deviation_factor(np.log10(V_jet_star))
     
     # Calculate acoustic power (Pi_star)
     # Source: Zorumski report 1982 part 2. Chapter 8.4 Equation 3
-    Pi_star = _K_JET * rho_j_star ** omega * V_j_star ** 8 * p
+    Pi_star = _K_JET * rho_jet_star ** omega * V_jet_star ** 8 * p
 
     # Calculate directivity function (D)
     # Source: Zorumski report 1982 part 2. Chapter 8.4 Table IV
-    directivity = 10**tables.get_directivity(theta, np.log10(V_j_star))
+    directivity = 10**tables.get_directivity(theta, np.log10(V_jet_star))
 
     # Calculate Strouhal frequency adjustment factor (xi)
     # Source: Zorumski report 1982 part 2. Chapter 8.4 Table V
     # TODO: check xi = min(1, xi)
-    xi = tables.get_strouhal_correction(V_j_star, theta)
+    xi = tables.get_strouhal_correction(V_jet_star, theta)
 
     # Calculate Strouhal number (St)
     # Source: Zorumski report 1982 part 2. Chapter 8.4 Eq. 9
-    D_j_star = np.sqrt(4 * A_j_star / np.pi)  # Jet diamater [-] (rel. to sqrt(A_e))
-    f_star = f * np.sqrt(_A_REF) / c_0
-    St = (f_star * D_j_star) / (xi * (V_j_star - M_0))
+    D_j_star = np.sqrt(4 * A_jet_star / np.pi)  # Jet diamater [-] (rel. to sqrt(A_e))
+    f_star = frequency * np.sqrt(_A_REF) / c_0
+    St = (f_star * D_j_star) / (xi * (V_jet_star - M_0))
 
     # Source: Zorumski report 1982 part 2. Chapter 8.4 Table VI
-    spectral_distribution = 10**(-tables.get_spectral_distribution(theta, Tt_j_star, np.log10(V_j_star), np.log10(St), f.size)/10)
+    spectral_distribution = 10**(-tables.get_spectral_distribution(theta, Tt_jet_star, np.log10(V_jet_star), np.log10(St), frequency.size)/10)
 
     # Calculate forward velocity index (m_theta)
     # Source: Zorumski report 1982 part 2. Chapter 8.4 Table VII
@@ -1259,33 +1259,33 @@ def compute_jet_mixing_source_noise(V_j_star, rho_j_star, A_j_star, Tt_j_star, t
 
     # Calculate mean-square acoustic pressure (msap)
     # Source: Zorumski report 1982 part 2. Chapter 8.4 Equation 8
-    msap = Pi_star * A_j_star / (4 * np.pi * r_s_star ** 2) * directivity * spectral_distribution / (1 - M_0 * np.cos(np.pi / 180. * (theta - delta))) * ((V_j_star - M_0) / V_j_star) ** m_theta
+    msap = Pi_star * A_jet_star / (4 * np.pi * r_s_star ** 2) * directivity * spectral_distribution / (1 - M_0 * np.cos(np.pi / 180. * (theta - delta_jet))) * ((V_jet_star - M_0) / V_jet_star) ** m_theta
 
     # Multiply with number of engines
     # Normalize msap by reference pressure
     return msap * n_engines / _P_REF**2
 
 
-def compute_jet_shock_source_noise(V_j_star, M_j, A_j_star, Tt_j_star, theta, delta, M_0, c_0, f, n_shock, n_engines):
+def compute_jet_shock_source_noise(V_jet_star, M_jet, A_jet_star, Tt_jet_star, theta, delta_jet, M_0, c_0, frequency, n_shock, n_engines):
                      
     """
     Compute jet mixing noise mean-square acoustic pressure (msap).
 
     Parameters
     ----------
-    V_j_star : 
+    V_jet_star : 
     
-    M_j : 
+    M_jet : 
     
-    A_j_star : 
+    A_jet_star : 
     
-    Tt_j_star : 
+    Tt_jet_star : 
     
     M_0 : 
     
     c_0 : 
 
-    f : np.ndarray
+    frequency : np.ndarray
 
     n_shock : int
     
@@ -1303,15 +1303,15 @@ def compute_jet_shock_source_noise(V_j_star, M_j, A_j_star, Tt_j_star, theta, de
 
     # Calculate msap for all frequencies
     # If the jet is supersonic: shock cell noise
-    if M_j > 1:
+    if M_jet > 1:
         # Calculate beta function
         # Source: Zorumski report 1982 part 2. Chapter 8.5 Equation 4
-        beta = (M_j ** 2 - 1) ** 0.5
+        beta = (M_jet ** 2 - 1) ** 0.5
 
         # Calculate eta (exponent of the pressure ratio parameter)
         # Source: Zorumski report 1982 part 2. Chapter 8.5 Equation 5
         if beta > 1:
-            if Tt_j_star < 1.1:
+            if Tt_jet_star < 1.1:
                 eta = 1.
             else:
                 eta = 2.
@@ -1320,11 +1320,11 @@ def compute_jet_shock_source_noise(V_j_star, M_j, A_j_star, Tt_j_star, theta, de
 
         # Calculate f_star
         # Source: Zorumski report 1982 part 2. Chapter 8.5 page 8-5-1 (symbols)
-        f_star = f * np.sqrt(_A_REF) / c_0
+        f_star = frequency * np.sqrt(_A_REF) / c_0
 
         # Calculate sigma parameter
         # Source: Zorumski report 1982 part 2. Chapter 8.5 Equation 3
-        sigma = 7.80 * beta * (1 - M_0 * np.cos(np.pi / 180 * theta)) * np.sqrt(A_j_star) * f_star
+        sigma = 7.80 * beta * (1 - M_0 * np.cos(np.pi / 180 * theta)) * np.sqrt(A_jet_star) * f_star
 
         # Calculate W function
         # Source: Zorumski report 1982 part 2. Chapter 8.5 Equation 6-7
@@ -1334,7 +1334,7 @@ def compute_jet_shock_source_noise(V_j_star, M_j, A_j_star, Tt_j_star, theta, de
             sum_inner = 0
             for m in np.arange(n_shock - k):
                 # Calculate q_km
-                q_km = 1.70 * k / V_j_star * (1 - 0.06 * (m + (k + 1) / 2)) * (1 + 0.7 * V_j_star * np.cos(np.pi / 180 * theta))
+                q_km = 1.70 * k / V_jet_star * (1 - 0.06 * (m + (k + 1) / 2)) * (1 + 0.7 * V_jet_star * np.cos(np.pi / 180 * theta))
 
                 # Calculate inner sum (note: the factor b in the denominator below the sine should not be there: to get same graph as Figure 4)
                 sum_inner = sum_inner + np.sin((b * sigma * q_km / 2)) / (sigma * q_km) * np.cos(sigma * q_km)
@@ -1351,18 +1351,27 @@ def compute_jet_shock_source_noise(V_j_star, M_j, A_j_star, Tt_j_star, theta, de
         log10H = tables.get_group_source_strength_spectrum(np.log10(sigma))
 
         # Source: Zorumski report 1982 part 2. Chapter 8.5.4
-        if Tt_j_star < 1.1:
+        if Tt_jet_star < 1.1:
             log10H = log10H - 0.2
         H = (10 ** log10H)
 
         # Calculate mean-square acoustic pressure (msap)
         # Source: Zorumski report 1982 part 2. Chapter 8.5 Equation 1
-        msap = 1.92e-3 * A_j_star / (4 * np.pi * r_s_star ** 2) * (1 + W) / (1 - M_0 * np.cos(np.pi / 180. * (theta - delta))) ** 4 * beta ** eta * H
+        msap = 1.92e-3 * A_jet_star / (4 * np.pi * r_s_star ** 2) * (1 + W) / (1 - M_0 * np.cos(np.pi / 180. * (theta - delta_jet))) ** 4 * beta ** eta * H
     
     else:
-        msap = np.zeros(f.size) * M_j ** 0
+        msap = np.zeros(frequency.size) * M_jet ** 0
 
     # Normalize msap by reference pressure
     return msap * n_engines / _P_REF**2
+
+
+
+
+
+
+
+
+
 
 
