@@ -20,9 +20,15 @@ def compute_spl(msap, rho_0, c_0):
     
     """
 
-    # Compute SPL
-    spl = 10*np.log10(msap) + 20.*np.log10(rho_0 * c_0 ** 2.)
+    # Allocate
+    spl = np.zeros_like(msap)
 
-    # Clip values to avoid (spl < 0)
-    return spl.clip(min=1e-99)
+    # Index variable where msap > 0
+    idx_msap_positive = msap > 0
+    spl[idx_msap_positive] = _compute_spl(msap[idx_msap_positive], rho_0, c_0)
 
+    return spl
+
+def _compute_spl(msap, rho_0, c_0):
+
+    return 10*np.log10(msap) + 20.*np.log10(rho_0 * c_0 ** 2.)

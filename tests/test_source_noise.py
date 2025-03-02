@@ -3,11 +3,288 @@ import numpy as np
 from pint.testsuite.helpers import assert_quantity_almost_equal
 
 from pyna.source import (
+    compute_fan_source_noise,
     compute_core_source_noise,
     compute_jet_mixing_source_noise,
     compute_jet_shock_source_noise,
 )
 from pyna.levels import compute_spl
+
+@pytest.mark.parametrize(
+    "dTt_f_star, mdot_f_star, N_f_star, A_f_star, d_f_star, \
+     blade_number, vane_number, M_tip_rel_design, rotor_stator_spacing, \
+     theta, M_0, c_0, T_0, rho_0, \
+     n_harmonics, n_engines, \
+     f, \
+     method_broadband, method_rotor_stator_interactions, noise_direction, flight_segment, \
+     flag_broadband, flag_tones, flag_combination_tones, flag_inlet_distortions, flag_inlet_guide_vanes, flag_liner_suppression, \
+     spl_fan_expected", 
+     [
+         (
+            0.17984723, 
+            0.42268729, 
+            0.41198041, 
+            0.91000581, 
+            1.1282707, 
+            25, 
+            48, 
+            1.68, 
+            300., 
+            90.,
+            0.31130, 
+            343.75344, 
+            298.15,
+            1.1156405329761, 
+            10, 
+            3, 
+            np.array([50.11872336,     63.09573445,   79.43282347,   100.        ,
+                      125.89254118,   158.48931925,  199.5262315 ,   251.18864315,
+                      316.22776602,   398.10717055,  501.18723363,   630.95734448,
+                      794.32823472,  1000.        , 1258.92541179,  1584.89319246,
+                      1995.26231497, 2511.88643151, 3162.27766017,  3981.07170553,
+                      5011.87233627, 6309.5734448 , 7943.28234724, 10000.        ]), 
+            "geae", 
+            "alliedsignal", 
+            "inlet",
+            "takeoff",
+            False,      # Broadband
+            True,       # Tones
+            False, 
+            False, 
+            False, 
+            False,
+            [0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0, 130.8,  0.0,  0.0, 121.6,  0.0, 118.8]
+         ),
+         (
+            0.17984723, 
+            0.42268729, 
+            0.41198041, 
+            0.91000581, 
+            1.1282707, 
+            25, 
+            48, 
+            1.68, 
+            300., 
+            10.,
+            0.31130, 
+            343.75344, 
+            298.15,
+            1.1156405329761, 
+            10, 
+            3, 
+            np.array([50.11872336,     63.09573445,   79.43282347,   100.        ,
+                      125.89254118,   158.48931925,  199.5262315 ,   251.18864315,
+                      316.22776602,   398.10717055,  501.18723363,   630.95734448,
+                      794.32823472,  1000.        , 1258.92541179,  1584.89319246,
+                      1995.26231497, 2511.88643151, 3162.27766017,  3981.07170553,
+                      5011.87233627, 6309.5734448 , 7943.28234724, 10000.        ]), 
+            "geae", 
+            "alliedsignal", 
+            "inlet",
+            "takeoff",
+            False,      # Broadband
+            True,       # Tones
+            False, 
+            False, 
+            False, 
+            True,
+            [0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0, 144.7,   0.0,   0.0, 135.5] 
+         ),
+         (
+            0.17984723, 
+            0.42268729, 
+            0.41198041, 
+            0.91000581, 
+            1.1282707, 
+            25, 
+            48, 
+            1.68, 
+            300., 
+            170.,
+            0.31130, 
+            343.75344, 
+            298.15,
+            1.1156405329761, 
+            10, 
+            3, 
+            np.array([50.11872336,     63.09573445,   79.43282347,   100.        ,
+                      125.89254118,   158.48931925,  199.5262315 ,   251.18864315,
+                      316.22776602,   398.10717055,  501.18723363,   630.95734448,
+                      794.32823472,  1000.        , 1258.92541179,  1584.89319246,
+                      1995.26231497, 2511.88643151, 3162.27766017,  3981.07170553,
+                      5011.87233627, 6309.5734448 , 7943.28234724, 10000.        ]), 
+            "geae", 
+            "alliedsignal", 
+            "inlet",
+            "takeoff",
+            False,      # Broadband
+            True,       # Tones
+            False, 
+            False, 
+            False, 
+            False,
+            [0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0, 98.2,  0.0,  0.0, 89.0,  0.0, 86.2, 83.2] 
+         ),
+     ]        
+)
+def test_compute_fan_tone_source_noise(dTt_f_star, mdot_f_star, N_f_star, A_f_star, d_f_star,
+                                  blade_number, vane_number, M_tip_rel_design, rotor_stator_spacing,
+                                  theta, M_0, c_0, T_0, rho_0,
+                                  n_harmonics, n_engines,
+                                  f,
+                                  method_broadband, method_rotor_stator_interactions, noise_direction, flight_segment,
+                                  flag_broadband, flag_tones, flag_combination_tones, flag_inlet_distortions, flag_inlet_guide_vanes, flag_liner_suppression,
+                                  spl_fan_expected):
+
+    # Test fan source noise module using 55t Depart-Standard at source time = 67.96 s
+    msap_fan = compute_fan_source_noise(dTt_f_star, mdot_f_star, N_f_star, A_f_star, d_f_star,
+                                        blade_number, vane_number, M_tip_rel_design, rotor_stator_spacing,
+                                        theta, M_0, c_0, T_0, rho_0,
+                                        n_harmonics, n_engines,
+                                        f,
+                                        method_broadband, method_rotor_stator_interactions, noise_direction, flight_segment, 
+                                        flag_broadband, flag_tones, flag_combination_tones, flag_inlet_distortions, flag_inlet_guide_vanes, flag_liner_suppression)
+    spl_fan = compute_spl(msap_fan, rho_0, c_0)
+
+    assert_quantity_almost_equal(spl_fan, spl_fan_expected, atol=3.0)
+
+@pytest.mark.parametrize(
+    "dTt_f_star, mdot_f_star, N_f_star, A_f_star, d_f_star, \
+     blade_number, vane_number, M_tip_rel_design, rotor_stator_spacing, \
+     theta, M_0, c_0, T_0, rho_0, \
+     n_harmonics, n_engines, \
+     f, \
+     method_broadband, method_rotor_stator_interactions, noise_direction, flight_segment, \
+     flag_broadband, flag_tones, flag_combination_tones, flag_inlet_distortions, flag_inlet_guide_vanes, flag_liner_suppression, \
+     spl_fan_expected", 
+     [
+         (
+            0.17984723, 
+            0.42268729, 
+            0.41198041, 
+            0.91000581, 
+            1.1282707, 
+            25, 
+            48, 
+            1.68, 
+            300., 
+            90.,
+            0.31130, 
+            343.75344, 
+            298.15,
+            1.1156405329761, 
+            10, 
+            3, 
+            np.array([50.11872336,     63.09573445,   79.43282347,   100.        ,
+                      125.89254118,   158.48931925,  199.5262315 ,   251.18864315,
+                      316.22776602,   398.10717055,  501.18723363,   630.95734448,
+                      794.32823472,  1000.        , 1258.92541179,  1584.89319246,
+                      1995.26231497, 2511.88643151, 3162.27766017,  3981.07170553,
+                      5011.87233627, 6309.5734448 , 7943.28234724, 10000.        ]), 
+            "geae", 
+            "alliedsignal", 
+            "inlet",
+            "takeoff",
+            True,      # Broadband
+            False,       # Tones
+            False, 
+            False, 
+            False, 
+            False,
+            [28.1,  36.2,  44.0,  51.0,  57.7,  64.7,  70.6,  76.2,  81.6,  86.8,  91.3,  95.6,  99.6, 103.0, 106.1, 109.1, 111.4, 113.4, 115.1, 116.5, 117.4, 117.9, 118.1, 118.0]
+         ),
+         (
+            0.17984723, 
+            0.42268729, 
+            0.41198041, 
+            0.91000581, 
+            1.1282707, 
+            25, 
+            48, 
+            1.68, 
+            300., 
+            10.,
+            0.31130, 
+            343.75344, 
+            298.15,
+            1.1156405329761, 
+            10, 
+            3, 
+            np.array([50.11872336,     63.09573445,   79.43282347,   100.        ,
+                      125.89254118,   158.48931925,  199.5262315 ,   251.18864315,
+                      316.22776602,   398.10717055,  501.18723363,   630.95734448,
+                      794.32823472,  1000.        , 1258.92541179,  1584.89319246,
+                      1995.26231497, 2511.88643151, 3162.27766017,  3981.07170553,
+                      5011.87233627, 6309.5734448 , 7943.28234724, 10000.        ]), 
+            "geae", 
+            "alliedsignal", 
+            "inlet",
+            "takeoff",
+            True,      # Broadband
+            False,       # Tones
+            False, 
+            False, 
+            False, 
+            False,
+            [ 35.0,  43.6,  52.1,  59.7,  66.9,  74.5,  81.0,  87.2,  93.2,  99.0, 104.1, 109.0, 113.6, 117.6, 121.2, 124.9, 127.8, 130.3, 132.6, 134.6, 136.1, 137.2, 138.0, 138.4]
+         ),
+         (
+            0.17984723, 
+            0.42268729, 
+            0.41198041, 
+            0.91000581, 
+            1.1282707, 
+            25, 
+            48, 
+            1.68, 
+            300., 
+            170.,
+            0.31130, 
+            343.75344, 
+            298.15,
+            1.1156405329761, 
+            10, 
+            3, 
+            np.array([50.11872336,     63.09573445,   79.43282347,   100.        ,
+                      125.89254118,   158.48931925,  199.5262315 ,   251.18864315,
+                      316.22776602,   398.10717055,  501.18723363,   630.95734448,
+                      794.32823472,  1000.        , 1258.92541179,  1584.89319246,
+                      1995.26231497, 2511.88643151, 3162.27766017,  3981.07170553,
+                      5011.87233627, 6309.5734448 , 7943.28234724, 10000.        ]), 
+            "geae", 
+            "alliedsignal", 
+            "inlet",
+            "takeoff",
+            True,      # Broadband
+            False,     # Tones
+            False, 
+            False, 
+            False, 
+            False,
+            [-10.3, -2.7,  4.8, 11.3, 17.6, 24.1, 29.6, 34.7, 39.7, 44.5, 48.6, 52.4, 56.0, 59.0, 61.7, 64.2, 66.1, 67.7, 68.9, 69.9, 70.3, 70.5, 70.2, 69.6]
+         ),
+     ]        
+)
+def test_compute_fan_broadband_source_noise(dTt_f_star, mdot_f_star, N_f_star, A_f_star, d_f_star,
+                                  blade_number, vane_number, M_tip_rel_design, rotor_stator_spacing,
+                                  theta, M_0, c_0, T_0, rho_0,
+                                  n_harmonics, n_engines,
+                                  f,
+                                  method_broadband, method_rotor_stator_interactions, noise_direction, flight_segment,
+                                  flag_broadband, flag_tones, flag_combination_tones, flag_inlet_distortions, flag_inlet_guide_vanes, flag_liner_suppression,
+                                  spl_fan_expected):
+
+    # Test fan source noise module using 55t Depart-Standard at source time = 67.96 s
+    msap_fan = compute_fan_source_noise(dTt_f_star, mdot_f_star, N_f_star, A_f_star, d_f_star,
+                                        blade_number, vane_number, M_tip_rel_design, rotor_stator_spacing,
+                                        theta, M_0, c_0, T_0, rho_0,
+                                        n_harmonics, n_engines,
+                                        f,
+                                        method_broadband, method_rotor_stator_interactions, noise_direction, flight_segment, 
+                                        flag_broadband, flag_tones, flag_combination_tones, flag_inlet_distortions, flag_inlet_guide_vanes, flag_liner_suppression)
+    spl_fan = compute_spl(msap_fan, rho_0, c_0)
+
+    assert_quantity_almost_equal(spl_fan, spl_fan_expected, atol=0.5)
 
 
 @pytest.mark.parametrize(

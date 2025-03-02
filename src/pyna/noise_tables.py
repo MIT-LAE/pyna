@@ -14,31 +14,31 @@ class FanNoiseTables:
 
     def get_inlet_broadband_directivity(self, theta, method):
 
-        if method not in ["kresja", "others"]:
+        if method not in ["original", "alliedsignal", "geae", "kresja"]:
             raise ValueError(f"Method {method} not available for get_inlet_broadband_directivity.")
 
-        return self._get_inlet_broadband_directivity(theta, method)
+        return self._get_inlet_broadband_directivity(theta, method if method == "kresja" else "others")
     
     def get_discharge_broadband_directivity(self, theta, method):
 
-        if method not in ["alliedsignal", "kresja", "others"]:
+        if method not in ["original", "alliedsignal", "geae", "kresja"]:
             raise ValueError(f"Method {method} not available for get_discharge_broadband_directivity.")
 
-        return self._get_discharge_broadband_directivity(theta, method)
+        return self._get_discharge_broadband_directivity(theta, method if method in ["alliedsignal", "kresja"] else "others")
     
     def get_inlet_tones_directivity(self, theta, method):
 
-        if method not in ["alliedsignal", "kresja", "others"]:
+        if method not in ["original", "alliedsignal", "geae", "kresja"]:
             raise ValueError(f"Method {method} not available for get_inlet_tones_directivity.")
 
-        return self._get_inlet_tones_directivity(theta, method)
+        return self._get_inlet_tones_directivity(theta, method if method in ["alliedsignal", "kresja"] else "others")
             
     def get_discharge_tones_directivity(self, theta, method):
 
-        if method not in ["alliedsignal", "kresja", "others"]:
+        if method not in ["original", "alliedsignal", "geae", "kresja"]:
             raise ValueError(f"Method {method} not available for get_discharge_tones_directivity.")
 
-        return self._get_discharge_tones_directivity(theta, method)
+        return self._get_discharge_tones_directivity(theta, method if method in ["alliedsignal", "kresja"] else "others")
 
     def get_combination_tones_directivity(self, theta, method):
 
@@ -61,6 +61,42 @@ class FanNoiseTables:
 
         return self._get_combination_tones_spectral_distribution(f_bpf, subharmonic, method)
 
+    def get_cleanup_turbulent_control_structures(self, method, flight_segment, i_harmonic, theta):
+
+        if method not in ["original", "alliedsignal", "geae", "kresja"]:
+            raise ValueError(f"Method {method} not available for get_cleanup_turbulent_control_structures.")
+        
+        return self._get_cleanup_turbulent_control_structures(self, method, flight_segment, i_harmonic)
+
+    @staticmethod
+    def get_filter_constants(filter_bandwidth):
+
+        """
+        Parameters
+        ----------
+        filter_bandwidth : float
+        
+        Returns
+        -------
+        float :
+        float :
+        float :
+        float :
+        """
+
+        f_1 = 0.78250188 + 0.10874906 * filter_bandwidth
+        f_2 = 1 - 0.10874906 * filter_bandwidth
+        f_3 = 1 + 0.12201845 * filter_bandwidth
+        f_4 = 1.2440369 - 0.12201845 * filter_bandwidth
+
+        return f_1, f_2, f_3, f_4
+
+    def get_liner_suppression(self, f, theta, noise_direction):
+
+        if noise_direction not in ["inlet", "discharge"]:
+            raise ValueError(f"Noise direction {noise_direction} not available for get_liner_suppression.")
+
+        return self._get_liner_suppression(f, theta, noise_direction)
 
     def _get_inlet_broadband_directivity(self, theta, method):
         return np.interp(
@@ -114,6 +150,49 @@ class FanNoiseTables:
         else:
             return self.data[f"combination_tones_spectral_offset3_{method}"][subharmonic-1] * np.log10(f_bpf) + self.data[f"combination_tones_spectral_offset3_{method}"][subharmonic-1]
 
+    def _get_cleanup_turbulent_control_structures(self, method, flight_segment, i_harmonic, theta):
+
+        if method == "geae":
+            # Compute suppression factors for GE#s "Flight cleanup Turbulent Control Structure."
+            # Approach or takeoff values to be applied to inlet discrete interaction tones
+            # at bpf and 2bpf.  Accounts for observed in-flight tendencies.
+
+            match flight_segment:
+                case "takeoff":
+                    match i_harmonic:
+                        case 1:
+                            turbulent_control_structures_term = np.interp(theta, self.data["geae_cleanup_turbulent_control_structures_x_0"], self.data["geae_cleanup_turbulent_control_structures_takeoff_harmonic_1_y"])
+                        case 2:
+                            turbulent_control_structures_term = np.interp(theta, self.data["geae_cleanup_turbulent_control_structures_x_0"], self.data["geae_cleanup_turbulent_control_structures_takeoff_harmonic_2_y"])
+                        case _:
+                            turbulent_control_structures_term = 0
+                case 'approach':
+                    match i_harmonic:    
+                        case 1:
+                            turbulent_control_structures_term = np.interp(theta, self.data["geae_cleanup_turbulent_control_structures_x_0"], self.data["geae_cleanup_turbulent_control_structures_approach_harmonic_1_y"])
+                        case 2:
+                            turbulent_control_structures_term = np.interp(theta, self.data["geae_cleanup_turbulent_control_structures_x_0"], self.data["geae_cleanup_turbulent_control_structures_approach_harmonic_2_y"])
+                        case _:
+                            turbulent_control_structures_term = 0
+                case _:
+                    turbulent_control_structures_term = 0
+        
+        else:
+            turbulent_control_structures_term = 0
+
+        return turbulent_control_structures_term
+
+
+    def _get_liner_suppression(self, f, theta, noise_direction):
+
+        f_interp = RegularGridInterpolator(
+            (
+                self.data[f'{noise_direction}_liner_suppression_x_0'], 
+                self.data[f'{noise_direction}_liner_suppression_x_1']), 
+                self.data[f'{noise_direction}_liner_suppression_y']
+            )
+
+        return  f_interp((f, theta), method="linear")
 
 class CoreNoiseTables:
 
