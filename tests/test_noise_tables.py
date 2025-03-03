@@ -7,7 +7,7 @@ from pyna.noise_tables import (
     CoreNoiseTables, 
     JetMixingNoiseTables,
     JetShockNoiseTables,
-    AirframeNoiseTables
+    AirframeNoiseTables,
 )
 
 

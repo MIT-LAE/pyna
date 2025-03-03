@@ -533,3 +533,42 @@ class AirframeNoiseTables:
             )
 
         return  f_interp((frequency,  theta), method="linear")
+
+
+class PerceivedNoiseTables:
+    def __init__(self):
+        """Load perceived noise tables """
+
+        with open('tables/levels_pnlt.json', 'r') as file:
+            data = json.load(file)
+        self.data = {key : np.array(data[key]) for key in data.keys()}
+
+    def get_noy_spl_a(self, i_frequency_band):
+        return self.data["noy_spl_a"][i_frequency_band]
+
+    def get_noy_spl_b(self, i_frequency_band):
+        return self.data["noy_spl_b"][i_frequency_band]
+
+    def get_noy_spl_c(self, i_frequency_band):
+        return self.data["noy_spl_c"][i_frequency_band]
+
+    def get_noy_spl_d(self, i_frequency_band):
+        return self.data["noy_spl_d"][i_frequency_band]
+
+    def get_noy_spl_e(self, i_frequency_band):
+        return self.data["noy_spl_e"][i_frequency_band]
+
+    def get_noy_m_b(self, i_frequency_band):
+        return self.data["noy_m_b"][i_frequency_band]
+
+    def get_noy_m_c(self, i_frequency_band):
+        return self.data["noy_m_c"][i_frequency_band]
+
+    def get_noy_m_d(self, i_frequency_band):
+        return self.data["noy_m_d"][i_frequency_band]
+
+    def get_noy_m_e(self, i_frequency_band):
+        return self.data["noy_m_e"][i_frequency_band]
+
+        
+    
