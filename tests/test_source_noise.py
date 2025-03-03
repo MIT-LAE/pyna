@@ -432,7 +432,6 @@ def test_compute_jet_mixing_source_noise(V_jet_star, rho_jet_star, A_jet_star, T
 
     assert_quantity_almost_equal(spl_jet_mixing, spl_jet_mixing_expected, atol=1e-1)
 
-
 @pytest.mark.parametrize(
     "V_jet_star, M_j_star, A_jet_star, Tt_jet_star, theta, delta_jet, M_0, c_0, rho_0, frequency, n_engines, n_shock, msap_jet_shock_expected",
     [

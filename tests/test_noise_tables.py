@@ -1,12 +1,15 @@
 import pytest
+import numpy as np
 from pint.testsuite.helpers import assert_quantity_almost_equal
 
 from pyna.noise_tables import (
     FanNoiseTables, 
     CoreNoiseTables, 
     JetMixingNoiseTables,
-    JetShockNoiseTables
+    JetShockNoiseTables,
+    AirframeNoiseTables
 )
+
 
 # Fan noise tables
 @pytest.mark.parametrize(
@@ -109,6 +112,51 @@ def test_fan_noise_tables_get_combination_tones_spectral_distribution(f_bpf, sub
     spectral_distribution = tables.get_combination_tones_tipmach(f_bpf, subharmonic, method)
     assert_quantity_almost_equal(spectral_distribution, spectral_distribution_expected)
 
+@pytest.mark.parametrize(
+    "method, flight_segment, i_harmonic, theta, cleanup_tcs_expected",
+    [
+        ("geae", "takeoff", 1, 90, 2.6),
+        ("geae", "takeoff", 1, 10, 4.8),
+        ("geae", "takeoff", 1, 170, 3.5),
+        ("geae", "takeoff", 2, 90, 1.1),
+        ("geae", "takeoff", 2, 10, 5.8),
+        ("geae", "takeoff", 2, 170, 0.8),
+        ("geae", "takeoff", 3, 90, 0),
+        ("geae", "takeoff", 3, 10, 0),
+        ("geae", "takeoff", 3, 170, 0),
+        ("original", "takeoff", 1, 90, 0),
+        ("original", "takeoff", 1, 10, 0),
+        ("original", "takeoff", 1, 170, 0),
+    ]
+)
+def test_get_cleanup_turbulent_control_structures(method, flight_segment, i_harmonic, theta, cleanup_tcs_expected):
+
+    tables = FanNoiseTables()
+    cleanup_tcs = tables.get_cleanup_turbulent_control_structures(method, flight_segment, i_harmonic, theta)
+    assert_quantity_almost_equal(cleanup_tcs, cleanup_tcs_expected)
+
+@pytest.mark.parametrize(
+    "frequency, theta, noise_direction, suppression_expected",
+    [
+        (
+            [50, 63, 80, 100, 125, 160, 200, 250, 315, 400, 500, 630, 800, 1000, 1250, 1600, 2000, 2500, 3150, 4000, 5000, 6300, 8000, 10000],
+            90, 
+            "inlet",
+            [0.852196, 0.808852, 0.756521, 0.701186, 0.64056, 0.569043, 0.502395, 0.436044, 0.369959, 0.306775, 0.254126, 0.207146, 0.167071, 0.137239, 0.11418, 0.095671, 0.084475, 0.077956, 0.0758635, 0.0788859, 0.0872591, 0.103179, 0.130114, 0.168291]
+        ),
+        (
+            [50, 63, 80, 100, 125, 160, 200, 250, 315, 400, 500, 630, 800, 1000, 1250, 1600, 2000, 2500, 3150, 4000, 5000, 6300, 8000, 10000],
+            90, 
+            "discharge",
+            [0.852196, 0.808852, 0.756521, 0.701186, 0.64056, 0.569043, 0.502395, 0.436044, 0.369959, 0.306775, 0.254126, 0.207146, 0.167071, 0.137239, 0.11418, 0.095671, 0.084475, 0.077956, 0.0758635, 0.0788859, 0.0872591, 0.103179, 0.130114, 0.168291]
+        )
+    ]
+)
+def test_get_liner_suppression(frequency, theta, noise_direction, suppression_expected):
+
+    tables = FanNoiseTables()
+    suppression = tables.get_liner_suppression(frequency, theta, noise_direction)
+    assert_quantity_almost_equal(suppression, suppression_expected)
 
 # Core noise tables
 @pytest.mark.parametrize(
@@ -261,3 +309,29 @@ def test_jet_shock_noise_tables_get_group_source_strength(log10_sigma, group_sou
     tables = JetShockNoiseTables()
     group_source_strength = tables.get_group_source_strength_spectrum(log10_sigma)
     assert_quantity_almost_equal(group_source_strength, group_source_strength_expected)
+
+@pytest.mark.parametrize(
+    "frequency, theta, suppression_expected",
+    [
+        (
+            [50, 63, 80, 100, 125, 160, 200, 250, 315, 400, 500, 630, 800, 1000, 1250, 1600, 2000, 2500, 3150, 4000, 5000, 6300, 8000, 10000],
+            90, 
+            [0.063096, 0.079433, 0.1, 0.12589, 0.15849, 0.15849, 0.12589, 0.1122, 0.12589, 0.12589, 0.12589, 0.1, 0.1, 0.1, 0.12589, 0.12589, 0.12589, 0.12589, 0.12589, 0.12589, 0.12589, 0.12589, 0.12589, 0.15849]
+        ),
+        (
+            [50, 63, 80, 100, 125, 160, 200, 250, 315, 400, 500, 630, 800, 1000, 1250, 1600, 2000, 2500, 3150, 4000, 5000, 6300, 8000, 10000],
+            10, 
+            [0.020893, 0.02884, 0.039811, 0.054954, 0.075858, 0.075858, 0.054954, 0.046774, 0.054954, 0.054954, 0.054954, 0.039811, 0.039811, 0.039811, 0.054954, 0.054954, 0.054954, 0.054954, 0.054954, 0.054954, 0.054954, 0.054954, 0.054954, 0.075858]
+        ),
+        (
+            [50, 63, 80, 100, 125, 160, 200, 250, 315, 400, 500, 630, 800, 1000, 1250, 1600, 2000, 2500, 3150, 4000, 5000, 6300, 8000, 10000],
+            170, 
+            [15.849, 12.589, 10, 7.9433, 6.3096, 6.3096, 7.9433, 8.9125, 7.9433, 7.9433, 7.9433, 10, 10, 10, 7.9433, 7.9433, 7.9433, 7.9433, 7.9433, 7.9433, 7.9433, 7.9433, 7.9433, 6.3096]
+        )
+    ]
+)
+def test_get_high_speed_research_suppression(frequency, theta, suppression_expected):
+
+    tables = AirframeNoiseTables()
+    suppression = tables.get_high_speed_research_suppression(frequency, theta)
+    assert_quantity_almost_equal(suppression, suppression_expected)

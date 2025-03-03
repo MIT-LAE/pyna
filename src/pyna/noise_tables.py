@@ -66,7 +66,7 @@ class FanNoiseTables:
         if method not in ["original", "alliedsignal", "geae", "kresja"]:
             raise ValueError(f"Method {method} not available for get_cleanup_turbulent_control_structures.")
         
-        return self._get_cleanup_turbulent_control_structures(self, method, flight_segment, i_harmonic)
+        return self._get_cleanup_turbulent_control_structures(method, flight_segment, i_harmonic, theta)
 
     @staticmethod
     def get_filter_constants(filter_bandwidth):
@@ -181,7 +181,6 @@ class FanNoiseTables:
             turbulent_control_structures_term = 0
 
         return turbulent_control_structures_term
-
 
     def _get_liner_suppression(self, frequency,  theta, noise_direction):
 
