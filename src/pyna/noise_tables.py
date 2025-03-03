@@ -91,12 +91,12 @@ class FanNoiseTables:
 
         return f_1, f_2, f_3, f_4
 
-    def get_liner_suppression(self, f, theta, noise_direction):
+    def get_liner_suppression(self, frequency,  theta, noise_direction):
 
         if noise_direction not in ["inlet", "discharge"]:
             raise ValueError(f"Noise direction {noise_direction} not available for get_liner_suppression.")
 
-        return self._get_liner_suppression(f, theta, noise_direction)
+        return self._get_liner_suppression(frequency,  theta, noise_direction)
 
     def _get_inlet_broadband_directivity(self, theta, method):
         return np.interp(
@@ -183,7 +183,7 @@ class FanNoiseTables:
         return turbulent_control_structures_term
 
 
-    def _get_liner_suppression(self, f, theta, noise_direction):
+    def _get_liner_suppression(self, frequency,  theta, noise_direction):
 
         f_interp = RegularGridInterpolator(
             (
@@ -192,7 +192,8 @@ class FanNoiseTables:
                 self.data[f'{noise_direction}_liner_suppression_y']
             )
 
-        return  f_interp((f, theta), method="linear")
+        return  f_interp((frequency,  theta), method="linear")
+
 
 class CoreNoiseTables:
 
@@ -510,3 +511,26 @@ class JetShockNoiseTables:
             self.data['group_source_strength_spectrum_x_0'], 
             self.data['group_source_strength_spectrum_y']
         )
+    
+
+class AirframeNoiseTables:
+    def __init__(self):
+        """Load jet shock noise tables """
+
+        with open('tables/source_airframe.json', 'r') as file:
+            data = json.load(file)
+        self.data = {key : np.array(data[key]) for key in data.keys()}
+
+    def get_high_speed_research_suppression(self, frequency,  theta):
+        return self._get_high_speed_research_suppression(frequency,  theta)
+    
+    def _get_high_speed_research_suppression(self, frequency,  theta):
+
+        f_interp = RegularGridInterpolator(
+            (
+                self.data[f'high_speed_research_suppression_x_0'], 
+                self.data[f'high_speed_research_suppression_x_1']), 
+                self.data[f'high_speed_research_suppression_y']
+            )
+
+        return  f_interp((frequency,  theta), method="linear")

@@ -3,16 +3,22 @@ from pyna.noise_tables import (
     CoreNoiseTables,
     JetMixingNoiseTables,
     JetShockNoiseTables,
-    FanNoiseTables
+    FanNoiseTables,
+    AirframeNoiseTables
 )
 
 _R_SOURCE = 0.3048
-_K_JET = 6.67e-5
-_P_REF = 2e-5
 _A_REF = 10.334 * ( 0.3048 ** 2 )
 _RHO_SEALEVEL = 1.22514
 _C_SEALEVEL = 340.29395
 
+_K_JET = 6.67e-5
+_P_REF = 2e-5
+
+_K_WING_CONVENTIONAL = 4.464e-5
+_K_WING_AERODYNAMICALLY_CLEAN = 7.075e-6
+
+# Fan noise modules
 def compute_inlet_broadband_level(temperature_term, M_tip, M_tip_rel_design, rotor_stator_spacing, theta, method_broadband, flag_inlet_distortions):
     """
     Compute the broadband component of the fan inlet mean-square acoustic pressure (msap).
@@ -128,7 +134,6 @@ def compute_inlet_broadband_level(temperature_term, M_tip, M_tip_rel_design, rot
 
     # Component value:
     return temperature_term + tipmach_term + rotorstator_term + directivity
-
 
 def compute_discharge_broadband_level(temperature_term, M_tip, M_tip_rel_design, rotor_stator_spacing, theta, method_broadband, flag_inlet_distortions, flag_inlet_guide_vanes):
     """
@@ -246,7 +251,6 @@ def compute_discharge_broadband_level(temperature_term, M_tip, M_tip_rel_design,
         flag_inlet_guide_vanes_term = 0
 
     return temperature_term + tipmach_term + rotorstator_term + directivity + flag_inlet_guide_vanes_term
-
 
 def compute_inlet_tone_level(temperature_term, M_tip, M_tip_rel_design, rotor_stator_spacing, theta, method_rotor_stator_interactions, flag_inlet_distortions):
     """
@@ -376,7 +380,6 @@ def compute_inlet_tone_level(temperature_term, M_tip, M_tip_rel_design, rotor_st
 
     return tonlv_I
 
-
 def compute_discharge_tone_level(temperature_term, M_tip, M_tip_rel_design, rotor_stator_spacing, theta, method_rotor_stator_interactions, flag_inlet_distortions, flag_inlet_guide_vanes):
     """
     Compute the tone component of the fan discharge mean-square acoustic pressure (msap)
@@ -498,7 +501,6 @@ def compute_discharge_tone_level(temperature_term, M_tip, M_tip_rel_design, roto
         igv_term = 0
 
     return temperature_term + tipmach_term + rotorstator_term + directivity + igv_term
-
 
 def calculate_inlet_harmonics(inlet_tones, M_tip, M_tip_tangential, blade_number, vane_number, n_harmonics, theta, blade_pass_frequency, frequency, method_rotor_stator_interactions, flight_segment, flag_inlet_distortions, flag_inlet_guide_vanes):
     """
@@ -675,7 +677,6 @@ def calculate_inlet_harmonics(inlet_tones, M_tip, M_tip_tangential, blade_number
 
     return dp
 
-
 def calculate_discharge_harmonics(discharge_tones, M_tip, M_tip_tangential, blade_number, vane_number, n_harmonics, blade_pass_frequency, frequency, method_rotor_stator_interactions, flag_inlet_guide_vanes):
     """
     Compute fan tone harmonics for inlet (dp) and discharge (dpx).
@@ -843,7 +844,6 @@ def calculate_discharge_harmonics(discharge_tones, M_tip, M_tip_tangential, blad
 
     return dpx
 
-
 def compute_combination_tone_level(temperature_term, M_tip, theta, blade_pass_frequency, frequency, method_rotor_stator_interactions, flag_inlet_guide_vanes):
     """
     Compute the combination tone component of the fan mean-square acoustic pressure (msap).
@@ -908,7 +908,6 @@ def compute_combination_tone_level(temperature_term, M_tip, theta, blade_pass_fr
 
     return dcp
 
-
 def get_cutoff(M_tip_tangential, blade_number, vane_number):
     """
     Compute if the fan is in cut-off condition (0/1). If the cutoff parameter is less than 1.05 and the tip Mach is less than unity, the fan is cut off
@@ -940,7 +939,6 @@ def get_cutoff(M_tip_tangential, blade_number, vane_number):
     else:
         return 0
 
-
 def compute_fan_inlet_spectral_distribution(blade_pass_frequency, frequency, method_broadband):
     
     # Spectral distribution
@@ -957,7 +955,6 @@ def compute_fan_inlet_spectral_distribution(blade_pass_frequency, frequency, met
 
     return spectral_distribution
 
-
 def compute_fan_discharge_spectral_distribution(blade_pass_frequency, frequency, method_broadband):
     
     # Spectral distribution
@@ -972,7 +969,6 @@ def compute_fan_discharge_spectral_distribution(blade_pass_frequency, frequency,
             spectral_distribution = 3.4929944 * (np.log(frequency / blade_pass_frequency / 2.5)) ** 2
 
     return spectral_distribution
-
 
 def compute_fan_source_noise(dTt_fan_star, mdot_fan_star, N_fan_star, A_fan_star, d_fan_star, 
                              blade_number, vane_number, M_tip_rel_design, rotor_stator_spacing, 
@@ -1109,6 +1105,7 @@ def compute_fan_source_noise(dTt_fan_star, mdot_fan_star, N_fan_star, A_fan_star
     # return msap_fan
 
 
+# Core noise modules
 def compute_core_source_noise(mdot_combustor_inlet_star, Tt_combustor_inlet_star, Tt_combustor_outlet_star, Pt_combustor_inlet_star, dTt_combustor_design_star, theta, M_0, frequency, n_engines):
     """
 	Compute core noise mean-square acoustic pressure (msap).
@@ -1185,6 +1182,7 @@ def compute_core_source_noise(mdot_combustor_inlet_star, Tt_combustor_inlet_star
     return msap/_P_REF**2
 
 
+# Jet noise modules
 def compute_jet_mixing_source_noise(V_jet_star, rho_jet_star, A_jet_star, Tt_jet_star, theta, delta_jet, M_0, c_0, frequency, n_engines):
     """
     Compute jet mixing noise mean-square acoustic pressure (msap).
@@ -1264,7 +1262,6 @@ def compute_jet_mixing_source_noise(V_jet_star, rho_jet_star, A_jet_star, Tt_jet
     # Multiply with number of engines
     # Normalize msap by reference pressure
     return msap * n_engines / _P_REF**2
-
 
 def compute_jet_shock_source_noise(V_jet_star, M_jet, A_jet_star, Tt_jet_star, theta, delta_jet, M_0, c_0, frequency, n_shock, n_engines):
                      
@@ -1366,12 +1363,499 @@ def compute_jet_shock_source_noise(V_jet_star, M_jet, A_jet_star, Tt_jet_star, t
     return msap * n_engines / _P_REF**2
 
 
+# Airframe noise modules
+def compute_wing_noise(wing_span, wing_area, M_0, c_0, rho_0, mu_0, theta, phi, frequency, flag_delta_wing, flag_aerodynamically_clean_wing):
+    """Compute wing trailing edge mean-square acoustic pressure (msap).
 
+    Parameters
+    ----------
+    wing_span : float
 
+    wing_area : float
 
+    M_0 : float
+        ambient Mach number [-]
+    c_0 : float
+        ambient speed of sound [m/s]
+    rho_0 : float
+        ambient density [kg/m3]
+    mu_0 : float
+        ambient dynamic viscosity [kg/m/s]
+    theta : float
+        polar directivity angle [deg]
+    phi : float
+        azimuthal directivity angle [deg]
+    frequency : np.ndarray
+        1/3rd octave frequency [Hz]
+    flag_delta_wing : bool
+        
+    flag_aerodynamically_clean_wing : bool
 
+    Returns
+    -------
+    np.ndarray
 
+    """
 
+    # Source: Zorumski report 1982 part 2. Chapter 8.8 Equation 5
+    boundary_layer_thickness_star = 0.37 * (wing_area / wing_span ** 2) * (rho_0 * M_0 * c_0 * wing_area / (mu_0 * wing_span)) ** (-0.2)
 
+    # Source: Zorumski report 1982 part 2. Chapter 8.8 Equation 7
+    if flag_aerodynamically_clean_wing:
+        acoustic_power = _K_WING_AERODYNAMICALLY_CLEAN * M_0 ** 5 * boundary_layer_thickness_star
+    else:
+        acoustic_power = _K_WING_CONVENTIONAL * M_0 ** 5 * boundary_layer_thickness_star
 
+    # Source: Zorumski report 1982 part 2. Chapter 8.8 Equation 8
+    directivity = 4. * np.cos(phi * np.pi / 180.) ** 2 * np.cos(theta / 2 * np.pi / 180.) ** 2
+
+    # Source: Zorumski report 1982 part 2. Chapter 8.8 Equation 10-11-12
+    strouhal = frequency * boundary_layer_thickness_star * wing_span / (M_0 * c_0) * (1 - M_0 * np.cos(theta * np.pi / 180.))
+    if flag_delta_wing:
+        spectral_distribution = 0.613 * (10 * strouhal) ** 4 * ((10 * strouhal) ** 1.35 + 0.5) ** (-4)
+    else:
+        spectral_distribution = 0.485 * (10 * strouhal) ** 4 * ((10 * strouhal) ** 1.5 + 0.5) ** (-4)
+
+    # Source: Zorumski report 1982 part 2. Chapter 8.8 Equation 1
+    r_source_star = _R_SOURCE/wing_span
+    return 1 / (4 * np.pi * r_source_star ** 2) / (1 - M_0 * np.cos(theta * np.pi / 180.)) ** 4 * (acoustic_power * directivity * spectral_distribution)
+
+def compute_horizontal_tail_noise(horizontal_tail_span, horizontal_tail_area, wing_span, M_0, c_0, rho_0, mu_0, theta, phi, frequency, flag_aerodynamically_clean_wing):
+    """
+    Compute horizontal tail trailing edge mean-square acoustic pressure (msap).
+
+    Parameters
+    ----------
+    horizontal_tail_span : float
+     
+    horizontal_tail_area : float
+    
+    wing_span : float
+
+    M_0 : float
+        ambient Mach number [-]
+    c_0 : float
+        ambient speed of sound [m/s]
+    rho_0 : float
+        ambient density [kg/m3]
+    mu_0 : float
+        ambient dynamic viscosity [kg/m/s]
+    theta : float
+        polar directivity angle [deg]
+    phi : float
+        azimuthal directivity angle [deg]
+    frequency : np.ndarray
+        1/3rd octave frequency [Hz]
+        
+    flag_aerodynamically_clean_wing : bool
+
+    Returns
+    -------
+    np.ndarray
+
+    """
+
+    # Source: Zorumski report 1982 part 2. Chapter 8.8 Equation 5
+    boundary_layer_thickness_star = 0.37 * (horizontal_tail_area / horizontal_tail_span ** 2) * (rho_0 * M_0 * c_0 * horizontal_tail_area / (mu_0 * horizontal_tail_span)) ** (-0.2)
+
+    # Source: Zorumski report 1982 part 2. Chapter 8.8 Equation 7
+    if flag_aerodynamically_clean_wing:
+        acoustic_power = _K_WING_AERODYNAMICALLY_CLEAN * M_0 ** 5 * boundary_layer_thickness_star * (horizontal_tail_span / wing_span) ** 2
+    else:
+        acoustic_power = _K_WING_CONVENTIONAL * M_0 ** 5 * boundary_layer_thickness_star * (horizontal_tail_span / wing_span) ** 2
+    
+    # Source: Zorumski report 1982 part 2. Chapter 8.8 Equation 8
+    directivity = 4 * np.cos(phi * np.pi / 180.) ** 2 * np.cos(theta / 2 * np.pi / 180.) ** 2
+
+    # Source: Zorumski report 1982 part 2. Chapter 8.8 Equation 10-11-12
+    strouhal = frequency * boundary_layer_thickness_star * horizontal_tail_span / (M_0 * c_0) * (1 - M_0 * np.cos(theta * np.pi / 180.))
+    spectral_distribution = 0.485 * (10 * strouhal) ** 4 * ((10 * strouhal) ** 1.5 + 0.5) ** (-4)
+
+    # Source: Zorumski report 1982 part 2. Chapter 8.8 Equation 1
+    r_source_star = _R_SOURCE / wing_span
+    return 1. / (4. * np.pi * r_source_star ** 2) / (1 - M_0 * np.cos(theta * np.pi / 180.)) ** 4 * (acoustic_power * directivity * spectral_distribution)
+
+def compute_vertical_tail_noise(vertical_tail_span, vertical_tail_area, wing_span, M_0, c_0, rho_0, mu_0, theta, phi, frequency, flag_delta_wing, flag_aerodynamically_clean_wing):
+    """
+    Compute vertical tail trailing edge mean-square acoustic pressure (msap).
+
+    Parameters
+    ----------
+    vertical_tail_span : float
+    
+    vertical_tail_area, wing_span : float
+
+    M_0 : float
+        ambient Mach number [-]
+    c_0 : float
+        ambient speed of sound [m/s]
+    rho_0 : float
+        ambient density [kg/m3]
+    mu_0 : float
+        ambient dynamic viscosity [kg/m/s]
+    theta : float
+        polar directivity angle [deg]
+    phi : float
+        azimuthal directivity angle [deg]
+    frequency : np.ndarray
+        1/3rd octave frequency [Hz]
+    flag_delta_wing : bool
+        
+    flag_aerodynamically_clean_wing : bool
+
+    Returns
+    -------
+    np.ndarray
+
+    """
+
+    # Source: Zorumski report 1982 part 2. Chapter 8.8 Equation 5
+    boundary_layer_thickness_star = 0.37 * (vertical_tail_area / vertical_tail_span ** 2) * (rho_0 * M_0 * c_0 * vertical_tail_area / (mu_0 * vertical_tail_span)) ** (-0.2)
+
+    # Source: Zorumski report 1982 part 2. Chapter 8.8 Equation 7
+    if flag_aerodynamically_clean_wing:
+        acoustic_power = _K_WING_AERODYNAMICALLY_CLEAN * M_0 ** 5 * boundary_layer_thickness_star * (vertical_tail_span / wing_span) ** 2
+    else:
+        acoustic_power = _K_WING_CONVENTIONAL * M_0 ** 5 * boundary_layer_thickness_star * (vertical_tail_span / wing_span) ** 2
+    
+    # Source: Zorumski report 1982 part 2. Chapter 8.8 Equation 8
+    directivity = 4 * np.sin(phi * np.pi / 180.) ** 2 * np.cos(theta / 2 * np.pi / 180.) ** 2
+
+    # Source: Zorumski report 1982 part 2. Chapter 8.8 Equation 10-11-12
+    strouhal = frequency * boundary_layer_thickness_star * vertical_tail_span / (M_0 * c_0) * (1 - M_0 * np.cos(theta * np.pi / 180.))
+    if flag_delta_wing:
+        spectral_distribution = 0.613 * (10 * strouhal) ** 4 * ((10 * strouhal) ** 1.35 + 0.5) ** (-4)
+    else:
+        spectral_distribution = 0.485 * (10 * strouhal) ** 4 * ((10 * strouhal) ** 1.35 + 0.5) ** (-4)
+
+    # Source: Zorumski report 1982 part 2. Chapter 8.8 Equation 1
+    r_source_star = _R_SOURCE / wing_span
+    return 1. / (4 * np.pi * r_source_star ** 2) / (1 - M_0 * np.cos(theta * np.pi / 180.)) ** 4 * (acoustic_power * directivity * spectral_distribution)
+
+def compute_leading_edge_slat_noise(wing_span, wing_area, M_0, c_0, rho_0, mu_0, theta, phi, frequency):
+    """
+    Compute leading-edge slat mean-square acoustic pressure (msap).
+
+    Parameters
+    ----------
+    wing_span : float
+     
+    wing_area : float
+
+    M_0 : float
+        ambient Mach number [-]
+    c_0 : float
+        ambient speed of sound [m/s]
+    rho_0 : float
+        ambient density [kg/m3]
+    mu_0 : float
+        ambient dynamic viscosity [kg/m/s]
+    theta : float
+        polar directivity angle [deg]
+    phi : float
+        azimuthal directivity angle [deg]
+    frequency : np.ndarray
+        1/3rd octave frequency [Hz]
+    flag_delta_wing : bool
+        
+    Returns
+    -------
+    np.ndarray
+
+    """
+    # Source: Zorumski report 1982 part 2. Chapter 8.8 Equation 5
+    boundary_layer_thickness_star = 0.37 * (wing_area / wing_span ** 2) * (rho_0 * M_0 * c_0 * wing_area / (mu_0 * wing_span)) ** (-0.2)
+
+    # Source: Zorumski report 1982 part 2. Chapter 8.8 Equation 4
+    acoustic_power_1 = 4.464e-5 * M_0 ** 5 * boundary_layer_thickness_star  # Slat noise
+    acoustic_power_2 = 4.464e-5 * M_0 ** 5 * boundary_layer_thickness_star  # Added trailing edge noise
+    
+    # Source: Zorumski report 1982 part 2. Chapter 8.8 Equation 8
+    directivity = 4 * np.cos(phi * np.pi / 180.) ** 2 * np.cos(theta / 2 * np.pi / 180.) ** 2
+    
+    # Source: Zorumski report 1982 part 2. Chapter 8.8 Equation 10-12-13
+    strouhal = frequency * boundary_layer_thickness_star * wing_span / (M_0 * c_0) * (1 - M_0 * np.cos(theta * np.pi / 180.))
+    spectral_distribution_1 = 0.613 * (10 * strouhal) ** 4 * ((10. * strouhal) ** 1.5 + 0.5) ** (-4)
+    spectral_distribution_2 = 0.613 * (2.19 * strouhal) ** 4 * ((2.19 * strouhal) ** 1.5 + 0.5) ** (-4)
+    
+    # Source: Zorumski report 1982 part 2. Chapter 8.8 Equation 1
+    r_source_star = _R_SOURCE / wing_span
+    return 1 / (4 * np.pi * r_source_star ** 2) / (1 - M_0 * np.cos(theta * np.pi / 180.)) ** 4 * (
+            acoustic_power_1 * directivity * spectral_distribution_1 + acoustic_power_2 * directivity * spectral_distribution_2
+        )
+
+def compute_trailing_edge_flap_noise(theta_flaps, flaps_span, flaps_area, wing_span, flaps_slot_number, M_0, c_0, theta, phi, frequency):
+    """
+    Compute trailing-edge flap mean-square acoustic pressure (msap).
+
+    Parameters
+    ----------
+    flaps_span : float
+    
+    flaps_area : float
+    
+    wing_span : float
+    
+    flaps_slot_number : int
+
+    M_0 : float
+        ambient Mach number [-]
+    c_0 : float
+        ambient speed of sound [m/s]
+    rho_0 : float
+        ambient density [kg/m3]
+    mu_0 : float
+        ambient dynamic viscosity [kg/m/s]
+    theta : float
+        polar directivity angle [deg]
+    phi : float
+        azimuthal directivity angle [deg]
+    frequency : np.ndarray
+        1/3rd octave frequency [Hz]
+    flag_delta_wing : bool
+        
+    Returns
+    -------
+    np.ndarray
+
+    """
+    
+    # Source: Zorumski report 1982 part 2. Chapter 8.8 Equation 14-15
+    match flaps_slot_number:
+        case 1 | 2:
+            acoustic_power = 2.787e-4 * M_0 ** 6 * flaps_area / wing_span ** 2 * np.sin(theta_flaps * np.pi / 180.) ** 2
+        case 3:
+            acoustic_power = 3.509e-4 * M_0 ** 6 * flaps_area / wing_span ** 2 * np.sin(theta_flaps * np.pi / 180.) ** 2
+    
+    # Source: Zorumski report 1982 part 2. Chapter 8.8 Equation 16
+    directivity = 3 * (
+            np.sin(theta_flaps * np.pi / 180.) * np.cos(theta * np.pi / 180.) + 
+            np.cos(theta_flaps * np.pi / 180.) * np.sin(theta * np.pi / 180.) * np.cos(phi * np.pi / 180.)
+        ) ** 2
+
+    # Source: Zorumski report 1982 part 2. Chapter 8.8 Equation 17-18-19
+    strouhal = frequency * flaps_area / (M_0 * flaps_span * c_0) * (1 - M_0 * np.cos(theta * np.pi / 180.))
+
+    match flaps_slot_number:
+        case 1| 2:
+            spectral_distribution = 216.49 * strouhal ** (-3)
+            spectral_distribution[strouhal < 2] = (0.0480 * strouhal)[strouhal < 2]
+            spectral_distribution[(2 <= strouhal)*(strouhal <= 20)] = (0.1406 * strouhal ** (-0.55))[(2 <= strouhal)*(strouhal <= 20)]
+        case 3:
+            spectral_distribution = 17078 * strouhal ** (-3)
+            spectral_distribution[strouhal < 2] = (0.0257 * strouhal)[strouhal < 2]
+            spectral_distribution[(2 <= strouhal)*(strouhal <= 75)] = (0.0536 * strouhal ** (-0.0625))[(2 <= strouhal)*(strouhal <= 75)]
+    
+    # Source: Zorumski report 1982 part 2. Chapter 8.8 Equation 1
+    r_source_star = _R_SOURCE / wing_span
+    return 1. / (4 * np.pi * r_source_star ** 2) / (1 - M_0 * np.cos(theta * np.pi / 180.)) ** 4 * (acoustic_power * directivity * spectral_distribution)
+
+def compute_landing_gear_noise(i_landing_gear, 
+                         main_gear_number, main_gear_tire_diameter, main_gear_wheel_number, main_gear_length, 
+                         nose_gear_number, nose_gear_tire_diameter, nose_gear_wheel_number, nose_gear_length, wing_span, 
+                         M_0, c_0, theta, phi, frequency):
+    """
+    Compute landing gear mean-square acoustic pressure (msap)
+
+    Parameters
+    ----------
+    main_gear_tire_diameter : float
+    
+    nose_gear_tire_diameter : float
+    
+    main_gear_wheel_number : int
+    
+    nose_gear_wheel_number : int
+    
+    main_gear_length : float
+    
+    nose_gear_length : float
+    
+    wing_span : float
+    
+    i_landing_gear : bool
+    
+    M_0 : float
+        ambient Mach number [-]
+    c_0 : float
+        ambient speed of sound [m/s]
+    rho_0 : float
+        ambient density [kg/m3]
+    mu_0 : float
+        ambient dynamic viscosity [kg/m/s]
+    theta : float
+        polar directivity angle [deg]
+    phi : float
+        azimuthal directivity angle [deg]
+    frequency : np.ndarray
+        1/3rd octave frequency [Hz]
+        
+    Returns
+    -------
+    np.ndarray
+
+    """
+
+    if i_landing_gear == 1:
+
+        # Source: Zorumski report 1982 part 2. Chapter 8.8 Equation 29
+        strouhal_nose_gear = frequency * nose_gear_tire_diameter / (M_0 * c_0) * (1 - M_0 * np.cos(theta * np.pi / 180.))
+        
+        # Calculate noise power and spectral distribution function
+        # Source: Zorumski report 1982 part 2. Chapter 8.8 Equation 20-21-22-25-26-27-28
+        match nose_gear_wheel_number:
+            case 1 | 2:
+                acoustic_power_nose_gear_wheel = 4.349e-4 * M_0 ** 6 * nose_gear_wheel_number * (nose_gear_tire_diameter / wing_span) ** 2
+                acoustic_power_nose_gear_strut = 2.753e-4 * M_0 ** 6 * (nose_gear_tire_diameter / wing_span) ** 2 * (nose_gear_length / nose_gear_tire_diameter)
+                spectral_distribution_nose_gear_wheel = 13.59 * strouhal_nose_gear ** 2 * (12.5 + strouhal_nose_gear ** 2) ** (-2.25)
+                spectral_distribution_nose_gear_strut = 5.32 * strouhal_nose_gear ** 2 * (30 + strouhal_nose_gear ** 8) ** (-1)
+            case 4:
+                acoustic_power_nose_gear_wheel = 3.414 - 4 * M_0 ** 6 * nose_gear_wheel_number * (nose_gear_tire_diameter / wing_span) ** 2
+                acoustic_power_nose_gear_strut = 2.753e-4 * M_0 ** 6 * (nose_gear_tire_diameter / wing_span) ** 2 * (nose_gear_length / nose_gear_tire_diameter)
+                spectral_distribution_nose_gear_wheel = 0.0577 * strouhal_nose_gear ** 2 * (1 + 0.25 * strouhal_nose_gear ** 2) ** (-1.5)
+                spectral_distribution_nose_gear_strut = 1.28 * strouhal_nose_gear ** 3 * (1.06 + strouhal_nose_gear ** 2) ** (-3)
+        
+        # Source: Zorumski report 1982 part 2. Chapter 8.8 Equation 29
+        strouhal_main_gear = frequency * main_gear_tire_diameter / (M_0 * c_0) * (1 - M_0 * np.cos(theta * np.pi / 180.))
+        
+        # Source: Zorumski report 1982 part 2. Chapter 8.8 Equation 20-21-22-25-26-27-28
+        match main_gear_wheel_number:
+            case 1 | 2:
+                acoustic_power_main_gear_wheel = 4.349e-4 * M_0 ** 6 * main_gear_wheel_number * (main_gear_tire_diameter / wing_span) ** 2
+                acoustic_power_main_gear_strut = 2.753e-4 * M_0 ** 6 * (main_gear_tire_diameter / wing_span) ** 2 * (main_gear_length / main_gear_tire_diameter)
+                spectral_distribution_main_gear_wheel = 13.59 * strouhal_main_gear ** 2 * (12.5 + strouhal_main_gear ** 2) ** (-2.25)
+                spectral_distribution_main_gear_strut = 5.32 * strouhal_main_gear ** 2 * (30 + strouhal_main_gear ** 8) ** (-1)
+            case 4:
+                acoustic_power_main_gear_wheel = 3.414e-4 * M_0 ** 6 * main_gear_wheel_number * (main_gear_tire_diameter / wing_span) ** 2
+                acoustic_power_main_gear_strut = 2.753e-4 * M_0 ** 6 * (main_gear_tire_diameter / wing_span) ** 2 * (main_gear_length / main_gear_tire_diameter)
+                spectral_distribution_main_gear_wheel = 0.0577 * strouhal_main_gear ** 2 * (1 + 0.25 * strouhal_main_gear ** 2) ** (-1.5)
+                spectral_distribution_main_gear_strut = 1.28 * strouhal_main_gear ** 3 * (1.06 + strouhal_main_gear ** 2) ** (-3)
+        
+        # Source: Zorumski report 1982 part 2. Chapter 8.8 Equation 23-24
+        directivity_wheel = 1.5 * np.sin(theta * np.pi / 180.) ** 2
+        directivity_strut = 3 * np.sin(theta * np.pi / 180.) ** 2 * np.sin(phi * np.pi / 180.) ** 2
+        
+        # Source: Zorumski report 1982 part 2. Chapter 8.8 Equation 1
+        # If landing gear is down
+        r_source_star = _R_SOURCE / wing_span
+        return 1 / (4 * np.pi * r_source_star ** 2) / (1 - M_0 * np.cos(theta * np.pi / 180.)) ** 4 * (
+                    nose_gear_number * (acoustic_power_nose_gear_wheel * spectral_distribution_nose_gear_wheel * directivity_wheel + 
+                                        acoustic_power_nose_gear_strut * spectral_distribution_nose_gear_strut * directivity_strut) +
+                    main_gear_number * (acoustic_power_main_gear_wheel * spectral_distribution_main_gear_wheel * directivity_wheel + 
+                                        acoustic_power_main_gear_strut * spectral_distribution_main_gear_strut * directivity_strut)
+                    )
+
+    else:
+        return np.zeros(frequency.size)
+
+def compute_airframe_source_noise(noise_component_lst,
+                                  wing_span, wing_area, 
+                                  horizontal_tail_span, horizontal_tail_area,
+                                  vertical_tail_span, vertical_tail_area,
+                                  theta_flaps, flaps_span, flaps_area, flaps_slot_number,
+                                  i_landing_gear, main_gear_number, main_gear_tire_diameter, main_gear_wheel_number, main_gear_length, nose_gear_number, nose_gear_tire_diameter, nose_gear_wheel_number, nose_gear_length,
+                                  M_0, c_0, rho_0, mu_0, theta, phi, frequency, 
+                                  flag_delta_wing, flag_aerodynamically_clean_wing, flag_high_speed_research_suppression):
+    """
+    Compute airframe noise mean-square acoustic pressure (msap).
+
+    Parameters
+    ----------
+    noise_components : []
+
+    wing_span : float
+    
+    wing_area  : float
+    
+    horizontal_tail_span : float
+    
+    horizontal_tail_area : float
+    
+    vertical_tail_span : float
+    
+    vertical_tail_area : float
+    
+    theta_flaps : float
+    
+    flaps_span : float
+    
+    flaps_area : float
+    
+    flaps_slot_number : int
+
+    i_landing_gear : bool
+
+    main_gear_tire_diameter : float
+    
+    main_gear_wheel_number : int
+
+    main_gear_length : float
+    
+    nose_gear_tire_diameter : float
+    
+    nose_gear_wheel_number : int
+
+    nose_gear_length : float
+    
+    M_0 : float
+    
+    c_0 : float
+    
+    rho_0 : float
+    
+    mu_0 : float
+    
+    theta : float
+
+    phi : float
+
+    frequency : np.ndarray
+    
+    flag_delta_wing : bool
+    
+    flag_aerodynamically_clean_wing : bool
+    
+    flag_high_speed_research_suppression : bool
+
+    Returns
+    -------
+    np.ndarray
+
+    """
+    
+    tables = AirframeNoiseTables()
+
+    # Allocate
+    msap = np.zeros(frequency.size,)
+
+    if M_0 != 0:
+        
+        if 'wing' in noise_component_lst:
+            msap += compute_wing_noise(wing_span, wing_area, M_0, c_0, rho_0, mu_0, theta, phi, frequency, flag_delta_wing, flag_aerodynamically_clean_wing)
+
+        if 'vertical_tail' in noise_component_lst:
+            msap += compute_vertical_tail_noise(vertical_tail_span, vertical_tail_area, wing_span, M_0, c_0, rho_0, mu_0, theta, phi, frequency, flag_delta_wing, flag_aerodynamically_clean_wing)
+                                                              
+        if 'horizontal_tail' in noise_component_lst:
+            msap += compute_horizontal_tail_noise(horizontal_tail_span, horizontal_tail_area, wing_span, M_0, c_0, rho_0, mu_0, theta, phi, frequency, flag_aerodynamically_clean_wing)
+
+        if 'leading_edge_slats' in noise_component_lst:
+            msap += compute_leading_edge_slat_noise(wing_span, wing_area, M_0, c_0, rho_0, mu_0, theta, phi, frequency)
+            
+        if 'trailing_edge_flaps' in noise_component_lst:
+            msap += compute_trailing_edge_flap_noise(theta_flaps, flaps_span, flaps_area, wing_span, flaps_slot_number, M_0, c_0, theta, phi, frequency)
+            
+        if 'landing_gear' in noise_component_lst:
+            msap += compute_landing_gear_noise(i_landing_gear, 
+                                         main_gear_number, main_gear_tire_diameter, main_gear_wheel_number, main_gear_length, 
+                                         nose_gear_number, nose_gear_tire_diameter, nose_gear_wheel_number, nose_gear_length, 
+                                         wing_span, 
+                                         M_0, c_0, theta, phi, frequency)
+                                         
+        if flag_high_speed_research_suppression:
+            # Source: validation noise assessment data set of NASA STCA (Berton et al., 2019)
+            suppression = tables.get_high_speed_research_suppression(frequency, theta)
+            msap *= suppression
+
+    return msap / _P_REF ** 2
 

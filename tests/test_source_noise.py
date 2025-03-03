@@ -7,9 +7,11 @@ from pyna.source import (
     compute_core_source_noise,
     compute_jet_mixing_source_noise,
     compute_jet_shock_source_noise,
+    compute_airframe_source_noise
 )
 from pyna.levels import compute_spl
 
+# Fan noise modules
 @pytest.mark.parametrize(
     "dTt_fan_star, mdot_fan_star, N_fan_star, A_fan_star, d_fan_star, \
      blade_number, vane_number, M_tip_rel_design, rotor_stator_spacing, \
@@ -136,7 +138,7 @@ def test_compute_fan_tone_source_noise(dTt_fan_star, mdot_fan_star, N_fan_star, 
                                   flag_broadband, flag_tones, flag_combination_tones, flag_inlet_distortions, flag_inlet_guide_vanes, flag_liner_suppression,
                                   spl_fan_expected):
 
-    # Test fan source noise module using 55t Depart-Standard at source time = 67.96 s
+    # Test fan source noise module using 55t NASA STCA Depart-Standard at source time = 67.96 s
     msap_fan = compute_fan_source_noise(dTt_fan_star, mdot_fan_star, N_fan_star, A_fan_star, d_fan_star,
                                         blade_number, vane_number, M_tip_rel_design, rotor_stator_spacing,
                                         theta, M_0, c_0, T_0, rho_0,
@@ -274,7 +276,7 @@ def test_compute_fan_broadband_source_noise(dTt_fan_star, mdot_fan_star, N_fan_s
                                   flag_broadband, flag_tones, flag_combination_tones, flag_inlet_distortions, flag_inlet_guide_vanes, flag_liner_suppression,
                                   spl_fan_expected):
 
-    # Test fan source noise module using 55t Depart-Standard at source time = 67.96 s
+    # Test fan source noise module using 55t NASA STCA Depart-Standard at source time = 67.96 s
     msap_fan = compute_fan_source_noise(dTt_fan_star, mdot_fan_star, N_fan_star, A_fan_star, d_fan_star,
                                         blade_number, vane_number, M_tip_rel_design, rotor_stator_spacing,
                                         theta, M_0, c_0, T_0, rho_0,
@@ -287,6 +289,7 @@ def test_compute_fan_broadband_source_noise(dTt_fan_star, mdot_fan_star, N_fan_s
     assert_quantity_almost_equal(spl_fan, spl_fan_expected, atol=0.5)
 
 
+# Core noise modules
 @pytest.mark.parametrize(
     "mdot_combustor_inlet_star, Tt_combustor_inlet_star, Tt_combustor_outlet_star, Pt_combustor_inlet_star, dTt_combustor_design_star, theta, M_0, c_0, rho_0, frequency, n_engines, spl_core_expected",
     [
@@ -351,13 +354,14 @@ def test_compute_fan_broadband_source_noise(dTt_fan_star, mdot_fan_star, N_fan_s
 )                               
 def test_compute_core_source_noise(mdot_combustor_inlet_star, Tt_combustor_inlet_star, Tt_combustor_outlet_star, Pt_combustor_inlet_star, dTt_combustor_design_star, theta, M_0, c_0, rho_0, frequency, n_engines, spl_core_expected):
 
-    # Test core source noise module using 55t Depart-Standard at source time = 67.96 s
+    # Test core source noise module using 55t NASA STCA Depart-Standard at source time = 67.96 s
     msap_core = compute_core_source_noise(mdot_combustor_inlet_star, Tt_combustor_inlet_star, Tt_combustor_outlet_star, Pt_combustor_inlet_star, dTt_combustor_design_star, theta, M_0, frequency, n_engines)
     spl_core = compute_spl(msap_core, rho_0, c_0)
 
     assert_quantity_almost_equal(spl_core, spl_core_expected, atol=5.2e-1)
 
 
+# Jet noise modules
 @pytest.mark.parametrize(
     "V_jet_star, rho_jet_star, A_jet_star, Tt_jet_star, theta, delta_jet, M_0, c_0, rho_0, frequency, n_engines, spl_jet_mixing_expected",
     [
@@ -422,7 +426,7 @@ def test_compute_core_source_noise(mdot_combustor_inlet_star, Tt_combustor_inlet
 )                                      
 def test_compute_jet_mixing_source_noise(V_jet_star, rho_jet_star, A_jet_star, Tt_jet_star, theta, delta_jet, M_0, c_0, rho_0, frequency, n_engines, spl_jet_mixing_expected):
 
-    # Test jet mixing source noise module using 55t Depart-Standard at source time = 67.96 s
+    # Test jet mixing source noise module using 55t NASA STCA Depart-Standard at source time = 67.96 s
     msap_jet_mixing = compute_jet_mixing_source_noise(V_jet_star, rho_jet_star, A_jet_star, Tt_jet_star, theta, delta_jet, M_0, c_0, frequency, n_engines)
     spl_jet_mixing = compute_spl(msap_jet_mixing, rho_0, c_0)
 
@@ -464,3 +468,759 @@ def test_compute_jet_shock_source_noise(V_jet_star, M_j_star, A_jet_star, Tt_jet
     spl_jet_shock = compute_spl(msap_jet_shock, rho_0, c_0)
 
     assert_quantity_almost_equal(spl_jet_shock, msap_jet_shock_expected)
+
+
+# Airframe noise modules
+@pytest.mark.parametrize(
+    "noise_component_lst, \
+    wing_span, wing_area, \
+    horizontal_tail_span, horizontal_tail_area, \
+    vertical_tail_span, vertical_tail_area, \
+    theta_flaps, flaps_span, flaps_area, flaps_slot_number, \
+    i_landing_gear, main_gear_number, main_gear_tire_diameter, main_gear_wheel_number, main_gear_length, nose_gear_number, nose_gear_tire_diameter, nose_gear_wheel_number, nose_gear_length, \
+    M_0, c_0, rho_0, mu_0, theta, phi, frequency, \
+    flag_delta_wing, flag_aerodynamically_clean_wing, flag_high_speed_research_suppression, \
+    spl_airframe_expected",
+    [
+        (
+            ["landing_gear"], # noise_component_lst
+            20.51304, # wing_span
+            0, # wing_area
+            0, # horizontal_tail_span
+            0, # horizontal_tail_area
+            0, # vertical_tail_span
+            0, # vertical_tail_area
+            0, # theta_flaps
+            0, # flaps_span
+            0, # flaps_area
+            0, # flaps_slot_number
+            True, # i_landing_gear
+            2, # main_gear_number
+            0.9144, # main_gear_tire_diameter
+            2, # main_gear_wheel_number 
+            2.286, # main_gear_length
+            1, # nose_gear_number
+            0.82296, # nose_gear_tire_diameter
+            2, # nose_gear_wheel_number
+            1.8288, # nose_gear_length
+            0.243, # M_0
+            346.16, # c_0
+            1.18341, # rho_0
+            1.83716554e-5, # mu_0
+            90, # theta
+            0., # phi
+            np.array([50.11872336,     63.09573445,   79.43282347,   100.        ,
+                      125.89254118,   158.48931925,  199.5262315 ,   251.18864315,
+                      316.22776602,   398.10717055,  501.18723363,   630.95734448,
+                      794.32823472,  1000.        , 1258.92541179,  1584.89319246,
+                      1995.26231497, 2511.88643151, 3162.27766017,  3981.07170553,
+                      5011.87233627, 6309.5734448 , 7943.28234724, 10000.        ]),
+            False, # flag_delta_wing
+            True, # flag_aerodynamically_clean_wing
+            False, # flag_high_speed_research_suppression
+            [115.25558766, 117.12999673, 118.93426941, 120.63204293, 122.17177455, 123.48474872, 124.48750492, 125.09216036, 125.22544579, 124.85053426, 123.97990113, 122.67073878, 121.00613314, 119.07350854, 116.9497252, 114.69501018, 112.35310628, 109.95423419, 107.51860247, 105.05944278, 102.58530238, 100.10165518, 97.61198769, 95.11851288]
+        ),
+        (
+            ["landing_gear"], # noise_component_lst
+            20.51304, # wing_span
+            0, # wing_area
+            0, # horizontal_tail_span
+            0, # horizontal_tail_area
+            0, # vertical_tail_span
+            0, # vertical_tail_area
+            0, # theta_flaps
+            0, # flaps_span
+            0, # flaps_area
+            0, # flaps_slot_number
+            True, # i_landing_gear
+            2, # main_gear_number
+            0.9144, # main_gear_tire_diameter
+            2, # main_gear_wheel_number 
+            2.286, # main_gear_length
+            1, # nose_gear_number
+            0.82296, # nose_gear_tire_diameter
+            2, # nose_gear_wheel_number
+            1.8288, # nose_gear_length
+            0.243, # M_0
+            346.16, # c_0
+            1.18341, # rho_0
+            1.83716554e-5, # mu_0
+            10, # theta
+            0., # phi
+            np.array([50.11872336,     63.09573445,   79.43282347,   100.        ,
+                      125.89254118,   158.48931925,  199.5262315 ,   251.18864315,
+                      316.22776602,   398.10717055,  501.18723363,   630.95734448,
+                      794.32823472,  1000.        , 1258.92541179,  1584.89319246,
+                      1995.26231497, 2511.88643151, 3162.27766017,  3981.07170553,
+                      5011.87233627, 6309.5734448 , 7943.28234724, 10000.        ]),
+            False, # flag_delta_wing
+            True, # flag_aerodynamically_clean_wing
+            False, # flag_high_speed_research_suppression
+            [102.51632681, 104.44275325, 106.32729581, 108.14711904, 109.86833667, 111.44248715, 112.80408018, 113.8719168,  114.55772377, 114.78376196, 114.50493456, 113.72424086, 112.49161315, 110.88700138, 108.99842546, 106.90544067, 104.67152568, 102.34334026,  99.95337461,  97.523466, 95.06795956,  92.59614126,  90.11396606,  87.62523008]
+        ),
+        (
+            ["landing_gear"], # noise_component_lst
+            20.51304, # wing_span
+            0, # wing_area
+            0, # horizontal_tail_span
+            0, # horizontal_tail_area
+            0, # vertical_tail_span
+            0, # vertical_tail_area
+            0, # theta_flaps
+            0, # flaps_span
+            0, # flaps_area
+            0, # flaps_slot_number
+            True, # i_landing_gear
+            2, # main_gear_number,
+            0.9144, # main_gear_tire_diameter
+            2, # main_gear_wheel_number 
+            2.286, # main_gear_length
+            1, # nose_gear_number
+            0.82296, # nose_gear_tire_diameter
+            2, # nose_gear_wheel_number
+            1.8288, # nose_gear_length
+            0.243, # M_0
+            346.16, # c_0
+            1.18341, # rho_0
+            1.83716554e-5, # mu_0
+            170, # theta
+            0., # phi
+            np.array([50.11872336,     63.09573445,   79.43282347,   100.        ,
+                      125.89254118,   158.48931925,  199.5262315 ,   251.18864315,
+                      316.22776602,   398.10717055,  501.18723363,   630.95734448,
+                      794.32823472,  1000.        , 1258.92541179,  1584.89319246,
+                      1995.26231497, 2511.88643151, 3162.27766017,  3981.07170553,
+                      5011.87233627, 6309.5734448 , 7943.28234724, 10000.        ]),
+            False, # flag_delta_wing
+            True, # flag_aerodynamically_clean_wing
+            False, # flag_high_speed_research_suppression
+            [ 98.07027439,  99.88033397, 101.58682073, 103.13932033, 104.47028142, 105.497026,   106.13145268, 106.2985756,  105.95850499, 105.12028998, 103.83856566, 102.19537221, 100.27841485,  98.16555859,  95.91821044, 93.58115963,  91.18543588,  88.75182622,  86.29395686,  83.82063647,  81.33750901,  78.84817038,  76.35490345,  73.85915421]
+        ),
+    ]
+)
+def test_compute_landing_gear_noise(noise_component_lst,
+                                    wing_span, wing_area,
+                                    horizontal_tail_span, horizontal_tail_area,
+                                    vertical_tail_span, vertical_tail_area,
+                                    theta_flaps, flaps_span, flaps_area, flaps_slot_number,
+                                    i_landing_gear, main_gear_number, main_gear_tire_diameter, main_gear_wheel_number, main_gear_length, nose_gear_number, nose_gear_tire_diameter, nose_gear_wheel_number, nose_gear_length,
+                                    M_0, c_0, rho_0, mu_0, theta, phi, frequency,
+                                    flag_delta_wing, flag_aerodynamically_clean_wing, flag_high_speed_research_suppression,
+                                    spl_airframe_expected):
+
+    # Test airframe source noise module using 55t NASA STCA Depart-Standard at source time = 24.87 s
+    msap_airframe = compute_airframe_source_noise(noise_component_lst,
+                                                  wing_span, wing_area,
+                                                  horizontal_tail_span, horizontal_tail_area,
+                                                  vertical_tail_span, vertical_tail_area,
+                                                  theta_flaps, flaps_span, flaps_area, flaps_slot_number,
+                                                  i_landing_gear, main_gear_number, main_gear_tire_diameter, main_gear_wheel_number, main_gear_length, nose_gear_number, nose_gear_tire_diameter, nose_gear_wheel_number, nose_gear_length,
+                                                  M_0, c_0, rho_0, mu_0, theta, phi, frequency,
+                                                  flag_delta_wing, flag_aerodynamically_clean_wing, flag_high_speed_research_suppression)
+    spl_airframe = compute_spl(msap_airframe, rho_0, c_0)
+
+    print(spl_airframe)
+
+    assert_quantity_almost_equal(spl_airframe, spl_airframe_expected, atol=0.1)
+
+@pytest.mark.parametrize(
+    "noise_component_lst, \
+    wing_span, wing_area, \
+    horizontal_tail_span, horizontal_tail_area, \
+    vertical_tail_span, vertical_tail_area, \
+    theta_flaps, flaps_span, flaps_area, flaps_slot_number, \
+    i_landing_gear, main_gear_number, main_gear_tire_diameter, main_gear_wheel_number, main_gear_length, nose_gear_number, nose_gear_tire_diameter, nose_gear_wheel_number, nose_gear_length, \
+    M_0, c_0, rho_0, mu_0, theta, phi, frequency, \
+    flag_delta_wing, flag_aerodynamically_clean_wing, flag_high_speed_research_suppression, \
+    spl_airframe_expected",
+    [
+        (
+            ["leading_edge_slats"], # noise_component_lst
+            20.51304, # wing_span
+            150.41, # wing_area
+            5.6388, # horizontal_tail_span
+            20.16, # horizontal_tail_area
+            4.7244, # vertical_tail_span
+            21.3677, # vertical_tail_area
+            10., # theta_flaps    
+            6.096, # flaps_span
+            11.1484, # flaps_area
+            1, # flaps_slot_number
+            False, # i_landing_gear
+            0, # main_gear_number
+            0, # main_gear_tire_diameter
+            0, # main_gear_wheel_number 
+            0, # main_gear_length
+            0, # nose_gear_number
+            0, # nose_gear_tire_diameter
+            0, # nose_gear_wheel_number
+            0, # nose_gear_length
+            0.243, # M_0
+            346.16, # c_0
+            1.18341, # rho_0
+            1.83716554e-5, # mu_0
+            90, # theta
+            0., # phi
+            np.array([50.11872336,     63.09573445,   79.43282347,   100.        ,
+                      125.89254118,   158.48931925,  199.5262315 ,   251.18864315,
+                      316.22776602,   398.10717055,  501.18723363,   630.95734448,
+                      794.32823472,  1000.        , 1258.92541179,  1584.89319246,
+                      1995.26231497, 2511.88643151, 3162.27766017,  3981.07170553,
+                      5011.87233627, 6309.5734448 , 7943.28234724, 10000.        ]),
+            False, # flag_delta_wing
+            True, # flag_aerodynamically_clean_wing
+            False, # flag_high_speed_research_suppression
+            [115.9, 117.2, 118.1, 118.6, 118.7, 118.7, 118.8, 118.9, 119.1, 119.1, 118.9, 118.4, 117.5, 116.4, 115.1, 113.5, 111.9, 110.3, 108.4, 106.5, 104.7, 102.7, 100.7,  98.8]
+        ),
+        (
+            ["leading_edge_slats"], # noise_component_lst
+            20.51304, # wing_span
+            150.41, # wing_area
+            5.6388, # horizontal_tail_span
+            20.16, # horizontal_tail_area
+            4.7244, # vertical_tail_span
+            21.3677, # vertical_tail_area
+            10., # theta_flaps    
+            6.096, # flaps_span
+            11.1484, # flaps_area
+            1, # flaps_slot_number
+            False, # i_landing_gear
+            0, # main_gear_number
+            0, # main_gear_tire_diameter
+            0, # main_gear_wheel_number 
+            0, # main_gear_length
+            0, # nose_gear_number
+            0, # nose_gear_tire_diameter
+            0, # nose_gear_wheel_number
+            0, # nose_gear_length
+            0.243, # M_0
+            346.16, # c_0
+            1.18341, # rho_0
+            1.83716554e-5, # mu_0
+            10, # theta
+            0., # phi
+            np.array([50.11872336,     63.09573445,   79.43282347,   100.        ,
+                      125.89254118,   158.48931925,  199.5262315 ,   251.18864315,
+                      316.22776602,   398.10717055,  501.18723363,   630.95734448,
+                      794.32823472,  1000.        , 1258.92541179,  1584.89319246,
+                      1995.26231497, 2511.88643151, 3162.27766017,  3981.07170553,
+                      5011.87233627, 6309.5734448 , 7943.28234724, 10000.        ]),
+            False, # flag_delta_wing
+            True, # flag_aerodynamically_clean_wing
+            False, # flag_high_speed_research_suppression
+            [121.4, 123.3, 124.8, 125.7, 126.2, 126.4, 126.4, 126.5, 126.6, 126.8, 126.9, 126.7, 126.2, 125.4, 124.4, 123.0, 121.6, 120.0, 118.3, 116.4, 114.6, 112.7, 110.7, 108.9]
+        ),
+        (
+            ["leading_edge_slats"], # noise_component_lst
+            20.51304, # wing_span
+            150.41, # wing_area
+            5.6388, # horizontal_tail_span
+            20.16, # horizontal_tail_area
+            4.7244, # vertical_tail_span
+            21.3677, # vertical_tail_area
+            10., # theta_flaps    
+            6.096, # flaps_span
+            11.1484, # flaps_area
+            1, # flaps_slot_number
+            False, # i_landing_gear
+            0, # main_gear_number
+            0, # main_gear_tire_diameter
+            0, # main_gear_wheel_number 
+            0, # main_gear_length
+            0, # nose_gear_number
+            0, # nose_gear_tire_diameter
+            0, # nose_gear_wheel_number
+            0, # nose_gear_length
+            0.243, # M_0
+            346.16, # c_0
+            1.18341, # rho_0
+            1.83716554e-5, # mu_0
+            170, # theta
+            0., # phi
+            np.array([50.11872336,     63.09573445,   79.43282347,   100.        ,
+                      125.89254118,   158.48931925,  199.5262315 ,   251.18864315,
+                      316.22776602,   398.10717055,  501.18723363,   630.95734448,
+                      794.32823472,  1000.        , 1258.92541179,  1584.89319246,
+                      1995.26231497, 2511.88643151, 3162.27766017,  3981.07170553,
+                      5011.87233627, 6309.5734448 , 7943.28234724, 10000.        ]),
+            False, # flag_delta_wing
+            True, # flag_aerodynamically_clean_wing
+            False, # flag_high_speed_research_suppression
+            [95.2, 96.1, 96.6, 96.8, 96.8, 96.9, 97.0, 97.2, 97.2, 97.0, 96.5, 95.7, 94.6, 93.3, 91.8, 90.1, 88.4, 86.7, 84.8, 82.8, 81.0, 79.0, 77.0, 75.0]
+        ),
+    ]
+)
+def test_compute_leading_edge_slat_noise(noise_component_lst,
+                                    wing_span, wing_area,
+                                    horizontal_tail_span, horizontal_tail_area,
+                                    vertical_tail_span, vertical_tail_area,
+                                    theta_flaps, flaps_span, flaps_area, flaps_slot_number,
+                                    i_landing_gear, main_gear_number, main_gear_tire_diameter, main_gear_wheel_number, main_gear_length, nose_gear_number, nose_gear_tire_diameter, nose_gear_wheel_number, nose_gear_length,
+                                    M_0, c_0, rho_0, mu_0, theta, phi, frequency,
+                                    flag_delta_wing, flag_aerodynamically_clean_wing, flag_high_speed_research_suppression,
+                                    spl_airframe_expected):
+    
+    # Test airframe source noise module using 55t NASA STCA Depart-Standard at source time = 24.87 s
+    msap_airframe = compute_airframe_source_noise(noise_component_lst,
+                                                  wing_span, wing_area,
+                                                  horizontal_tail_span, horizontal_tail_area,
+                                                  vertical_tail_span, vertical_tail_area,
+                                                  theta_flaps, flaps_span, flaps_area, flaps_slot_number,
+                                                  i_landing_gear, main_gear_number, main_gear_tire_diameter, main_gear_wheel_number, main_gear_length, nose_gear_number, nose_gear_tire_diameter, nose_gear_wheel_number, nose_gear_length,
+                                                  M_0, c_0, rho_0, mu_0, theta, phi, frequency,
+                                                  flag_delta_wing, flag_aerodynamically_clean_wing, flag_high_speed_research_suppression)
+    spl_airframe = compute_spl(msap_airframe, rho_0, c_0)
+
+    assert_quantity_almost_equal(spl_airframe, spl_airframe_expected, atol=0.11)
+
+@pytest.mark.parametrize(
+    "noise_component_lst, \
+    wing_span, wing_area, \
+    horizontal_tail_span, horizontal_tail_area, \
+    vertical_tail_span, vertical_tail_area, \
+    theta_flaps, flaps_span, flaps_area, flaps_slot_number, \
+    i_landing_gear, main_gear_number, main_gear_tire_diameter, main_gear_wheel_number, main_gear_length, nose_gear_number, nose_gear_tire_diameter, nose_gear_wheel_number, nose_gear_length, \
+    M_0, c_0, rho_0, mu_0, theta, phi, frequency, \
+    flag_delta_wing, flag_aerodynamically_clean_wing, flag_high_speed_research_suppression, \
+    spl_airframe_expected",
+    [
+        (
+            ["trailing_edge_flaps"], # noise_component_lst
+            20.51304, # wing_span
+            150.41, # wing_area
+            5.6388, # horizontal_tail_span
+            20.16, # horizontal_tail_area
+            4.7244, # vertical_tail_span
+            21.3677, # vertical_tail_area
+            10., # theta_flaps    
+            6.096, # flaps_span
+            11.1484, # flaps_area
+            1, # flaps_slot_number
+            False, # i_landing_gear
+            0, # main_gear_number
+            0, # main_gear_tire_diameter
+            0, # main_gear_wheel_number 
+            0, # main_gear_length
+            0, # nose_gear_number
+            0, # nose_gear_tire_diameter
+            0, # nose_gear_wheel_number
+            0, # nose_gear_length
+            0.243, # M_0
+            346.16, # c_0
+            1.18341, # rho_0
+            1.83716554e-5, # mu_0
+            90, # theta
+            0., # phi
+            np.array([50.11872336,     63.09573445,   79.43282347,   100.        ,
+                      125.89254118,   158.48931925,  199.5262315 ,   251.18864315,
+                      316.22776602,   398.10717055,  501.18723363,   630.95734448,
+                      794.32823472,  1000.        , 1258.92541179,  1584.89319246,
+                      1995.26231497, 2511.88643151, 3162.27766017,  3981.07170553,
+                      5011.87233627, 6309.5734448 , 7943.28234724, 10000.        ]),
+            False, # flag_delta_wing
+            True, # flag_aerodynamically_clean_wing
+            False, # flag_high_speed_research_suppression
+            [111.0, 112.0, 113.0, 113.5, 112.9, 112.3, 111.8, 111.3, 110.7, 110.1, 109.6, 109.1, 108.5, 107.1, 104.2, 100.9,  98.0,  95.1,  92.1,  89.0,  86.1,  83.1,  80.0,  77.1]
+        ),
+        (
+            ["trailing_edge_flaps"], # noise_component_lst
+            20.51304, # wing_span
+            150.41, # wing_area
+            5.6388, # horizontal_tail_span
+            20.16, # horizontal_tail_area
+            4.7244, # vertical_tail_span
+            21.3677, # vertical_tail_area
+            10., # theta_flaps    
+            6.096, # flaps_span
+            11.1484, # flaps_area
+            1, # flaps_slot_number
+            False, # i_landing_gear
+            0, # main_gear_number
+            0, # main_gear_tire_diameter
+            0, # main_gear_wheel_number 
+            0, # main_gear_length
+            0, # nose_gear_number
+            0, # nose_gear_tire_diameter
+            0, # nose_gear_wheel_number
+            0, # nose_gear_length
+            0.243, # M_0
+            346.16, # c_0
+            1.18341, # rho_0
+            1.83716554e-5, # mu_0
+            10, # theta
+            0., # phi
+            np.array([50.11872336,     63.09573445,   79.43282347,   100.        ,
+                      125.89254118,   158.48931925,  199.5262315 ,   251.18864315,
+                      316.22776602,   398.10717055,  501.18723363,   630.95734448,
+                      794.32823472,  1000.        , 1258.92541179,  1584.89319246,
+                      1995.26231497, 2511.88643151, 3162.27766017,  3981.07170553,
+                      5011.87233627, 6309.5734448 , 7943.28234724, 10000.        ]),
+            False, # flag_delta_wing
+            True, # flag_aerodynamically_clean_wing
+            False, # flag_high_speed_research_suppression
+            [105.4, 106.4, 107.4, 108.4, 109.1, 108.6, 108.0, 107.5, 106.9, 106.4, 105.8, 105.3, 104.7, 104.2, 103.3, 100.1,  97.2,  94.3,  91.2,  88.1,  85.2,  82.2,  79.1,  76.2]
+        ),
+        (
+            ["trailing_edge_flaps"], # noise_component_lst
+            20.51304, # wing_span
+            150.41, # wing_area
+            5.6388, # horizontal_tail_span
+            20.16, # horizontal_tail_area
+            4.7244, # vertical_tail_span
+            21.3677, # vertical_tail_area
+            10., # theta_flaps    
+            6.096, # flaps_span
+            11.1484, # flaps_area
+            1, # flaps_slot_number
+            False, # i_landing_gear
+            0, # main_gear_number
+            0, # main_gear_tire_diameter
+            0, # main_gear_wheel_number 
+            0, # main_gear_length
+            0, # nose_gear_number
+            0, # nose_gear_tire_diameter
+            0, # nose_gear_wheel_number
+            0, # nose_gear_length
+            0.243, # M_0
+            346.16, # c_0
+            1.18341, # rho_0
+            1.83716554e-5, # mu_0
+            170, # theta
+            0., # phi
+            np.array([50.11872336,     63.09573445,   79.43282347,   100.        ,
+                      125.89254118,   158.48931925,  199.5262315 ,   251.18864315,
+                      316.22776602,   398.10717055,  501.18723363,   630.95734448,
+                      794.32823472,  1000.        , 1258.92541179,  1584.89319246,
+                      1995.26231497, 2511.88643151, 3162.27766017,  3981.07170553,
+                      5011.87233627, 6309.5734448 , 7943.28234724, 10000.        ]),
+            False, # flag_delta_wing
+            True, # flag_aerodynamically_clean_wing
+            False, # flag_high_speed_research_suppression
+            [-216.75724839, -215.75724838, -215.21199616, -215.76199616, -216.31199616, -216.86199616, -217.41199616, -217.96199616, -218.51199616, -219.06199616, -219.61199616, -220.16199616, -221.4338336 , -224.4338336 , -227.4338336 , -230.4338336 , -233.4338336 , -236.4338336 , -239.4338336 , -242.4338336 , -245.4338336 , -248.4338336 , -251.4338336 , -254.4338336 ]
+        )
+    ]
+)
+def test_compute_trailing_edge_flap_noise(noise_component_lst,
+                                          wing_span, wing_area,
+                                          horizontal_tail_span, horizontal_tail_area,
+                                          vertical_tail_span, vertical_tail_area,
+                                          theta_flaps, flaps_span, flaps_area, flaps_slot_number,
+                                          i_landing_gear, main_gear_number, main_gear_tire_diameter, main_gear_wheel_number, main_gear_length, nose_gear_number, nose_gear_tire_diameter, nose_gear_wheel_number, nose_gear_length,
+                                          M_0, c_0, rho_0, mu_0, theta, phi, frequency,
+                                          flag_delta_wing, flag_aerodynamically_clean_wing, flag_high_speed_research_suppression,
+                                          spl_airframe_expected):
+    
+    # Test airframe source noise module using 55t NASA STCA Depart-Standard at source time = 24.87 s
+    msap_airframe = compute_airframe_source_noise(noise_component_lst,
+                                                  wing_span, wing_area,
+                                                  horizontal_tail_span, horizontal_tail_area,
+                                                  vertical_tail_span, vertical_tail_area,
+                                                  theta_flaps, flaps_span, flaps_area, flaps_slot_number,
+                                                  i_landing_gear, main_gear_number, main_gear_tire_diameter, main_gear_wheel_number, main_gear_length, nose_gear_number, nose_gear_tire_diameter, nose_gear_wheel_number, nose_gear_length,
+                                                  M_0, c_0, rho_0, mu_0, theta, phi, frequency,
+                                                  flag_delta_wing, flag_aerodynamically_clean_wing, flag_high_speed_research_suppression)
+    spl_airframe = compute_spl(msap_airframe, rho_0, c_0)
+
+    assert_quantity_almost_equal(spl_airframe, spl_airframe_expected, atol=0.2)
+
+@pytest.mark.parametrize(
+    "noise_component_lst, \
+    wing_span, wing_area, \
+    horizontal_tail_span, horizontal_tail_area, \
+    vertical_tail_span, vertical_tail_area, \
+    theta_flaps, flaps_span, flaps_area, flaps_slot_number, \
+    i_landing_gear, main_gear_number, main_gear_tire_diameter, main_gear_wheel_number, main_gear_length, nose_gear_number, nose_gear_tire_diameter, nose_gear_wheel_number, nose_gear_length, \
+    M_0, c_0, rho_0, mu_0, theta, phi, frequency, \
+    flag_delta_wing, flag_aerodynamically_clean_wing, flag_high_speed_research_suppression, \
+    spl_airframe_expected",
+    [
+        (
+            ["wing"], # noise_component_lst
+            20.51304, # wing_span
+            150.41, # wing_area
+            5.6388, # horizontal_tail_span
+            20.16, # horizontal_tail_area
+            4.7244, # vertical_tail_span
+            21.3677, # vertical_tail_area
+            10., # theta_flaps    
+            6.096, # flaps_span
+            11.1484, # flaps_area
+            1, # flaps_slot_number
+            False, # i_landing_gear
+            0, # main_gear_number
+            0, # main_gear_tire_diameter
+            0, # main_gear_wheel_number 
+            0, # main_gear_length
+            0, # nose_gear_number
+            0, # nose_gear_tire_diameter
+            0, # nose_gear_wheel_number
+            0, # nose_gear_length
+            0.243, # M_0
+            346.16, # c_0
+            1.18341, # rho_0
+            1.83716554e-5, # mu_0
+            90, # theta
+            0., # phi
+            np.array([50.11872336,     63.09573445,   79.43282347,   100.        ,
+                      125.89254118,   158.48931925,  199.5262315 ,   251.18864315,
+                      316.22776602,   398.10717055,  501.18723363,   630.95734448,
+                      794.32823472,  1000.        , 1258.92541179,  1584.89319246,
+                      1995.26231497, 2511.88643151, 3162.27766017,  3981.07170553,
+                      5011.87233627, 6309.5734448 , 7943.28234724, 10000.        ]),
+            True, # flag_delta_wing
+            True, # flag_aerodynamically_clean_wing
+            False, # flag_high_speed_research_suppression
+            [106.0, 107.5, 108.5, 109.2, 109.4, 109.3, 109.0, 108.4, 107.6, 106.6, 105.6, 104.5, 103.2, 102.0, 100.7,  99.3,  98.0,  96.7,  95.3,  93.9,  92.6,  91.2,  89.7,  88.4]
+        ),
+        (
+            ["wing"], # noise_component_lst
+            20.51304, # wing_span
+            150.41, # wing_area
+            5.6388, # horizontal_tail_span
+            20.16, # horizontal_tail_area
+            4.7244, # vertical_tail_span
+            21.3677, # vertical_tail_area
+            10., # theta_flaps    
+            6.096, # flaps_span
+            11.1484, # flaps_area
+            1, # flaps_slot_number
+            False, # i_landing_gear
+            0, # main_gear_number
+            0, # main_gear_tire_diameter
+            0, # main_gear_wheel_number 
+            0, # main_gear_length
+            0, # nose_gear_number
+            0, # nose_gear_tire_diameter
+            0, # nose_gear_wheel_number
+            0, # nose_gear_length
+            0.243, # M_0
+            346.16, # c_0
+            1.18341, # rho_0
+            1.83716554e-5, # mu_0
+            10, # theta
+            0., # phi
+            np.array([50.11872336,     63.09573445,   79.43282347,   100.        ,
+                      125.89254118,   158.48931925,  199.5262315 ,   251.18864315,
+                      316.22776602,   398.10717055,  501.18723363,   630.95734448,
+                      794.32823472,  1000.        , 1258.92541179,  1584.89319246,
+                      1995.26231497, 2511.88643151, 3162.27766017,  3981.07170553,
+                      5011.87233627, 6309.5734448 , 7943.28234724, 10000.        ]),
+            True, # flag_delta_wing
+            True, # flag_aerodynamically_clean_wing
+            False, # flag_high_speed_research_suppression
+            [111.5, 113.4, 115.0, 116.1, 116.8, 117.1, 117.1, 116.8, 116.3, 115.5, 114.6, 113.5, 112.4, 111.2, 110.0, 108.6, 107.4, 106.1, 104.7, 103.3, 101.9, 100.6,  99.1,  97.8]
+        ),
+        (
+            ["wing"], # noise_component_lst
+            20.51304, # wing_span
+            150.41, # wing_area
+            5.6388, # horizontal_tail_span
+            20.16, # horizontal_tail_area
+            4.7244, # vertical_tail_span
+            21.3677, # vertical_tail_area
+            10., # theta_flaps    
+            6.096, # flaps_span
+            11.1484, # flaps_area
+            1, # flaps_slot_number
+            False, # i_landing_gear
+            0, # main_gear_number
+            0, # main_gear_tire_diameter
+            0, # main_gear_wheel_number 
+            0, # main_gear_length
+            0, # nose_gear_number
+            0, # nose_gear_tire_diameter
+            0, # nose_gear_wheel_number
+            0, # nose_gear_length
+            0.243, # M_0
+            346.16, # c_0
+            1.18341, # rho_0
+            1.83716554e-5, # mu_0
+            170, # theta
+            0., # phi
+            np.array([50.11872336,     63.09573445,   79.43282347,   100.        ,
+                      125.89254118,   158.48931925,  199.5262315 ,   251.18864315,
+                      316.22776602,   398.10717055,  501.18723363,   630.95734448,
+                      794.32823472,  1000.        , 1258.92541179,  1584.89319246,
+                      1995.26231497, 2511.88643151, 3162.27766017,  3981.07170553,
+                      5011.87233627, 6309.5734448 , 7943.28234724, 10000.        ]),
+            True, # flag_delta_wing
+            True, # flag_aerodynamically_clean_wing
+            False, # flag_high_speed_research_suppression
+            [85.5, 86.5, 87.2, 87.5, 87.4, 87.1, 86.5, 85.8, 84.8, 83.7, 82.6, 81.4, 80.1, 78.9, 77.6, 76.2, 74.9, 73.5, 72.1, 70.7, 69.4, 68.0, 66.5, 65.2]
+        )
+    ]
+)
+def test_compute_trailing_edge_wing_noise(noise_component_lst,
+                                          wing_span, wing_area,
+                                          horizontal_tail_span, horizontal_tail_area,
+                                          vertical_tail_span, vertical_tail_area,
+                                          theta_flaps, flaps_span, flaps_area, flaps_slot_number,
+                                          i_landing_gear, main_gear_number, main_gear_tire_diameter, main_gear_wheel_number, main_gear_length, nose_gear_number, nose_gear_tire_diameter, nose_gear_wheel_number, nose_gear_length,
+                                          M_0, c_0, rho_0, mu_0, theta, phi, frequency,
+                                          flag_delta_wing, flag_aerodynamically_clean_wing, flag_high_speed_research_suppression,
+                                          spl_airframe_expected):
+    
+    # Test airframe source noise module using 55t NASA STCA Depart-Standard at source time = 24.87 s
+    msap_airframe = compute_airframe_source_noise(noise_component_lst,
+                                                  wing_span, wing_area,
+                                                  horizontal_tail_span, horizontal_tail_area,
+                                                  vertical_tail_span, vertical_tail_area,
+                                                  theta_flaps, flaps_span, flaps_area, flaps_slot_number,
+                                                  i_landing_gear, main_gear_number, main_gear_tire_diameter, main_gear_wheel_number, main_gear_length, nose_gear_number, nose_gear_tire_diameter, nose_gear_wheel_number, nose_gear_length,
+                                                  M_0, c_0, rho_0, mu_0, theta, phi, frequency,
+                                                  flag_delta_wing, flag_aerodynamically_clean_wing, flag_high_speed_research_suppression)
+    spl_airframe = compute_spl(msap_airframe, rho_0, c_0)
+
+    print(np.max(np.abs(spl_airframe-spl_airframe_expected)))
+
+    assert_quantity_almost_equal(spl_airframe, spl_airframe_expected, atol=1.11)
+
+@pytest.mark.parametrize(
+    "noise_component_lst, \
+    wing_span, wing_area, \
+    horizontal_tail_span, horizontal_tail_area, \
+    vertical_tail_span, vertical_tail_area, \
+    theta_flaps, flaps_span, flaps_area, flaps_slot_number, \
+    i_landing_gear, main_gear_number, main_gear_tire_diameter, main_gear_wheel_number, main_gear_length, nose_gear_number, nose_gear_tire_diameter, nose_gear_wheel_number, nose_gear_length, \
+    M_0, c_0, rho_0, mu_0, theta, phi, frequency, \
+    flag_delta_wing, flag_aerodynamically_clean_wing, flag_high_speed_research_suppression, \
+    spl_airframe_expected",
+    [
+        (
+            ["horizontal_tail"], # noise_component_lst
+            20.51304, # wing_span
+            150.41, # wing_area
+            5.6388, # horizontal_tail_span
+            20.16, # horizontal_tail_area
+            4.7244, # vertical_tail_span
+            21.3677, # vertical_tail_area
+            10., # theta_flaps    
+            6.096, # flaps_span
+            11.1484, # flaps_area
+            1, # flaps_slot_number
+            False, # i_landing_gear
+            0, # main_gear_number
+            0, # main_gear_tire_diameter
+            0, # main_gear_wheel_number 
+            0, # main_gear_length
+            0, # nose_gear_number
+            0, # nose_gear_tire_diameter
+            0, # nose_gear_wheel_number
+            0, # nose_gear_length
+            0.243, # M_0
+            346.16, # c_0
+            1.18341, # rho_0
+            1.83716554e-5, # mu_0
+            90, # theta
+            0., # phi
+            np.array([50.11872336,     63.09573445,   79.43282347,   100.        ,
+                      125.89254118,   158.48931925,  199.5262315 ,   251.18864315,
+                      316.22776602,   398.10717055,  501.18723363,   630.95734448,
+                      794.32823472,  1000.        , 1258.92541179,  1584.89319246,
+                      1995.26231497, 2511.88643151, 3162.27766017,  3981.07170553,
+                      5011.87233627, 6309.5734448 , 7943.28234724, 10000.        ]),
+            False, # flag_delta_wing
+            False, # flag_aerodynamically_clean_wing
+            False, # flag_high_speed_research_suppression
+            [102.3, 104.8, 106.9, 108.4, 109.5, 110.0, 110.1, 109.7, 108.9, 107.8, 106.6, 105.1, 103.4, 101.7, 100.0,  98.0,  96.1,  94.2,  92.3,  90.2,  88.3,  86.3,  84.3,  82.4]
+        ),
+        (
+            ["horizontal_tail"], # noise_component_lst
+            20.51304, # wing_span
+            150.41, # wing_area
+            5.6388, # horizontal_tail_span
+            20.16, # horizontal_tail_area
+            4.7244, # vertical_tail_span
+            21.3677, # vertical_tail_area
+            10., # theta_flaps    
+            6.096, # flaps_span
+            11.1484, # flaps_area
+            1, # flaps_slot_number
+            False, # i_landing_gear
+            0, # main_gear_number
+            0, # main_gear_tire_diameter
+            0, # main_gear_wheel_number 
+            0, # main_gear_length
+            0, # nose_gear_number
+            0, # nose_gear_tire_diameter
+            0, # nose_gear_wheel_number
+            0, # nose_gear_length
+            0.243, # M_0
+            346.16, # c_0
+            1.18341, # rho_0
+            1.83716554e-5, # mu_0
+            10, # theta
+            0., # phi
+            np.array([50.11872336,     63.09573445,   79.43282347,   100.        ,
+                      125.89254118,   158.48931925,  199.5262315 ,   251.18864315,
+                      316.22776602,   398.10717055,  501.18723363,   630.95734448,
+                      794.32823472,  1000.        , 1258.92541179,  1584.89319246,
+                      1995.26231497, 2511.88643151, 3162.27766017,  3981.07170553,
+                      5011.87233627, 6309.5734448 , 7943.28234724, 10000.        ]),
+            False, # flag_delta_wing
+            False, # flag_aerodynamically_clean_wing
+            False, # flag_high_speed_research_suppression
+            [106.7, 109.6, 112.2, 114.3, 115.9, 117.1, 117.7, 117.8, 117.5, 116.8, 115.8, 114.6, 113.0, 111.5, 109.8, 107.9, 106.1, 104.3, 102.3, 100.3,  98.4,  96.4,  94.4,  92.4]
+        ),
+        (
+            ["horizontal_tail"], # noise_component_lst
+            20.51304, # wing_span
+            150.41, # wing_area
+            5.6388, # horizontal_tail_span
+            20.16, # horizontal_tail_area
+            4.7244, # vertical_tail_span
+            21.3677, # vertical_tail_area
+            10., # theta_flaps    
+            6.096, # flaps_span
+            11.1484, # flaps_area
+            1, # flaps_slot_number
+            False, # i_landing_gear
+            0, # main_gear_number
+            0, # main_gear_tire_diameter
+            0, # main_gear_wheel_number 
+            0, # main_gear_length
+            0, # nose_gear_number
+            0, # nose_gear_tire_diameter
+            0, # nose_gear_wheel_number
+            0, # nose_gear_length
+            0.243, # M_0
+            346.16, # c_0
+            1.18341, # rho_0
+            1.83716554e-5, # mu_0
+            170, # theta
+            0., # phi
+            np.array([50.11872336,     63.09573445,   79.43282347,   100.        ,
+                      125.89254118,   158.48931925,  199.5262315 ,   251.18864315,
+                      316.22776602,   398.10717055,  501.18723363,   630.95734448,
+                      794.32823472,  1000.        , 1258.92541179,  1584.89319246,
+                      1995.26231497, 2511.88643151, 3162.27766017,  3981.07170553,
+                      5011.87233627, 6309.5734448 , 7943.28234724, 10000.        ]),
+            False, # flag_delta_wing
+            False, # flag_aerodynamically_clean_wing
+            False, # flag_high_speed_research_suppression
+            [82.7, 84.8, 86.5, 87.5, 88.1, 88.2, 87.8, 87.1, 86.1, 84.7, 83.3, 81.7, 79.9, 78.1, 76.3, 74.3, 72.4, 70.5, 68.5, 66.5, 64.6, 62.6, 60.5, 58.6]
+        )
+    ]
+)
+def test_compute_horizontal_tail_noise(noise_component_lst,
+                                      wing_span, wing_area,
+                                      horizontal_tail_span, horizontal_tail_area,
+                                      vertical_tail_span, vertical_tail_area,
+                                      theta_flaps, flaps_span, flaps_area, flaps_slot_number,
+                                      i_landing_gear, main_gear_number, main_gear_tire_diameter, main_gear_wheel_number, main_gear_length, nose_gear_number, nose_gear_tire_diameter, nose_gear_wheel_number, nose_gear_length,
+                                      M_0, c_0, rho_0, mu_0, theta, phi, frequency,
+                                      flag_delta_wing, flag_aerodynamically_clean_wing, flag_high_speed_research_suppression,
+                                      spl_airframe_expected):
+    
+    # Test airframe source noise module using 55t NASA STCA Depart-Standard at source time = 24.87 s
+    msap_airframe = compute_airframe_source_noise(noise_component_lst,
+                                                  wing_span, wing_area,
+                                                  horizontal_tail_span, horizontal_tail_area,
+                                                  vertical_tail_span, vertical_tail_area,
+                                                  theta_flaps, flaps_span, flaps_area, flaps_slot_number,
+                                                  i_landing_gear, main_gear_number, main_gear_tire_diameter, main_gear_wheel_number, main_gear_length, nose_gear_number, nose_gear_tire_diameter, nose_gear_wheel_number, nose_gear_length,
+                                                  M_0, c_0, rho_0, mu_0, theta, phi, frequency,
+                                                  flag_delta_wing, flag_aerodynamically_clean_wing, flag_high_speed_research_suppression)
+    spl_airframe = compute_spl(msap_airframe, rho_0, c_0)
+
+    assert_quantity_almost_equal(spl_airframe, spl_airframe_expected, atol=1.15)
