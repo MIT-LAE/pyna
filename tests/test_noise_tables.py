@@ -8,6 +8,7 @@ from pyna.noise_tables import (
     JetMixingNoiseTables,
     JetShockNoiseTables,
     AirframeNoiseTables,
+    PropagationTables
 )
 
 
@@ -335,3 +336,17 @@ def test_get_high_speed_research_suppression(frequency, theta, suppression_expec
     tables = AirframeNoiseTables()
     suppression = tables.get_high_speed_research_suppression(frequency, theta)
     assert_quantity_almost_equal(suppression, suppression_expected)
+
+
+@pytest.mark.parametrize(
+    "altitude, frequency, absorption_expected",
+    [
+        (0., 50., 0.000285538),
+        (6000., 10000., 0.08914042),
+    ]
+)
+def test_get_atmospheric_absorption(altitude, frequency, absorption_expected):
+
+    tables = PropagationTables()
+    absorption = tables.get_atmospheric_absorption(altitude, frequency)
+    assert_quantity_almost_equal(absorption, absorption_expected)

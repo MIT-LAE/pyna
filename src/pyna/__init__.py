@@ -3,8 +3,9 @@ from pyna.noise_tables import (
 )
 
 from pyna.frequency_bands import (
-    compute_frequency_bands,
-    compute_frequency_subbands
+    get_frequency_bands,
+    get_frequency_subbands,
+    get_spectrum_subbands
 )
 
 from pyna.levels import (

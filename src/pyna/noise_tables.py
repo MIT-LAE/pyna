@@ -535,11 +535,41 @@ class AirframeNoiseTables:
         return  f_interp((frequency,  theta), method="linear")
 
 
+class PropagationTables:
+    
+    def __init__(self):
+        
+        # Propagation tables
+        with open('tables/propagation.json', 'r') as file:
+            data = json.load(file)
+        self.data = {key : np.array(data[key]) for key in data.keys()}
+
+    def get_atmospheric_absorption(self, altitude, frequency):
+
+        if altitude < -200 or altitude > 60000:
+            raise ValueError(f"Altitude = {altitude} m is outside the domain of the noise tables [-200., 6000.]m.")
+
+        if frequency < 37 or frequency > 12500:
+            raise ValueError(f"Frequency = {frequency} Hz is outside the domain of the noise tables [37., 12500.]m.")
+
+        return self._get_atmospheric_absorption(altitude, frequency)
+
+
+    def _get_atmospheric_absorption(self, altitude, frequency):
+
+        f_interp = RegularGridInterpolator(
+            (self.data['atmospheric_absorption_x_0'], self.data['atmospheric_absorption_x_1']), 
+            self.data['atmospheric_absorption_y']
+            )
+
+        return  f_interp((altitude, frequency), method="linear")
+
+
 class PerceivedNoiseTables:
     def __init__(self):
         """Load perceived noise tables """
 
-        with open('tables/levels_pnlt.json', 'r') as file:
+        with open('tables/perceived_noise.json', 'r') as file:
             data = json.load(file)
         self.data = {key : np.array(data[key]) for key in data.keys()}
 

@@ -2,7 +2,11 @@ import pytest
 import numpy as np
 from pint.testsuite.helpers import assert_quantity_almost_equal
 
-from pyna.frequency_bands import compute_frequency_bands, compute_frequency_subbands
+from pyna.frequency_bands import (
+    get_frequency_bands, 
+    get_frequency_subbands,
+    get_spectrum_subbands
+)
 
 
 @pytest.mark.parametrize(
@@ -19,13 +23,13 @@ from pyna.frequency_bands import compute_frequency_bands, compute_frequency_subb
 )                                        
 def test_compute_jet_mixing_source_noise(n_frequency_bands, f_expected):
 
-    f = compute_frequency_bands(n_frequency_bands)
+    frequency = get_frequency_bands(n_frequency_bands)
 
-    assert_quantity_almost_equal(f, f_expected)    
+    assert_quantity_almost_equal(frequency, f_expected)    
 
 
 @pytest.mark.parametrize(
-    "f, n_frequency_subbands, f_subbands_expected",
+    "frequency, n_frequency_subbands, frequency_subbands_expected",
     [
         (
             np.array([  50.11872336,    63.09573445,    79.43282347,    100.        ,
@@ -68,8 +72,28 @@ def test_compute_jet_mixing_source_noise(n_frequency_bands, f_expected):
         )
     ]
 )
-def test_compute_jet_mixing_source_noise(f, n_frequency_subbands, f_subbands_expected):
+def test_compute_jet_mixing_source_noise(frequency, n_frequency_subbands, frequency_subbands_expected):
 
-    f_subbands = compute_frequency_subbands(f, n_frequency_subbands)
+    frequency_subbands = get_frequency_subbands(frequency, n_frequency_subbands)
 
-    assert_quantity_almost_equal(f_subbands, f_subbands_expected)    
+    assert_quantity_almost_equal(frequency_subbands, frequency_subbands_expected)    
+
+
+# @pytest.mark.parametrize(
+#     "msap, n_frequency_subbands",
+#     [
+#         (np.linspace(1e-5, 10e-5, 24), 5),
+#         (1e-5*np.ones(24), 5),
+#         (1e-5*np.ones(24), 11),
+#     ]
+# )
+# def test_get_spectrum_subbands(msap, n_frequency_subbands):
+
+#     msap_sb = get_spectrum_subbands(msap, 5)
+
+#     # Test if sum of all subband spectrum equals spectrum value
+#     for i in np.arange(msap.size):
+#         assert_quantity_almost_equal(
+#             sum(msap_sb[i*n_frequency_subbands:(i+1)*n_frequency_subbands]),
+#             msap[i]
+#         )

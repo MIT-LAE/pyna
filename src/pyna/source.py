@@ -7,14 +7,16 @@ from pyna.noise_tables import (
     AirframeNoiseTables
 )
 
-_R_SOURCE = 0.3048
-_A_REF = 10.334 * ( 0.3048 ** 2 )
-_RHO_SEALEVEL = 1.22514
-_C_SEALEVEL = 340.29395
+from pyna.constants import (
+    _R_SOURCE,
+    _A_REF,
+    _RHO_SEALEVEL,
+    _C_SEALEVEL,
+    _P_REF,
+
+)
 
 _K_JET = 6.67e-5
-_P_REF = 2e-5
-
 _K_WING_CONVENTIONAL = 4.464e-5
 _K_WING_AERODYNAMICALLY_CLEAN = 7.075e-6
 

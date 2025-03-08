@@ -32,6 +32,7 @@ def compute_spl(msap, rho_0, c_0):
 
     return spl
 
+
 def _compute_spl(msap, rho_0, c_0):
 
     return 10*np.log10(msap) + 20.*np.log10(rho_0 * c_0 ** 2.)
@@ -53,6 +54,27 @@ def compute_oaspl(spl):
 
     # Compute OASPL by summing SPL logarithmically
     return 10 * np.log10(np.sum(10 ** (spl / 10.)))
+
+
+def compute_ioaspl(t_observer, oaspl):
+    """
+    Compute time-integrated oaspl.
+
+    Parameters
+    ----------
+    t_observer : np.ndarray
+        Observer time [s]
+    oaspl : np.ndarray
+        Overall sound pressure level [dB]
+    
+    Returns
+    -------
+    ioaspl : float
+
+    """
+
+    return np.trapezoid(oaspl, x=t_observer)
+
 
 def compute_noy(spl):
 
@@ -91,6 +113,7 @@ def compute_noy(spl):
 
     return noy
 
+
 def compute_pnl(noy):
     """_summary_
 
@@ -108,6 +131,7 @@ def compute_pnl(noy):
     n_t = np.max(noy) + 0.15 * (np.sum(noy) - np.max(noy))
 
     return 40 + 10. / np.log10(2) * np.log10(n_t)
+
 
 def compute_tonal_corrections(spl):
 
@@ -223,7 +247,8 @@ def compute_tonal_corrections(spl):
                 tone_corrections[i] = 3. + 1. / 3.
     
     return tone_corrections
-    
+
+
 def compute_pnlt(spl, flag_tones_under_800Hz):
     """Compute perceived noise level, tone corrected [PNdB]
 
@@ -259,3 +284,128 @@ def compute_pnlt(spl, flag_tones_under_800Hz):
     # Compute tone-corrected perceived noise level (pnlt)
     # Source: ICAO Annex 16 Appendix 2 section 4.3 Step 10
     return pnl + c_max
+
+
+def ipnlt(t_observer, pnlt):
+    """
+    Compute time-integrated pnlt.
+
+    Parameters
+    ----------
+    t_observer : np.ndarray
+        Observer time [s]
+    pnlt : np.ndarray 
+        Perceived noise leve, tone-corrected [PNdB]
+    
+    Returns
+    -------
+    ipnlt : float
+
+    """
+
+    # Interpolate time, pnlt and C
+    n_ip = np.int64(np.ceil((t_observer[-1] - t_observer[0]) / 0.5))
+
+    t_ip = np.zeros(n_ip)
+    for i in np.arange(n_ip):
+        t_ip[i] = t_observer[0] + i * 0.5
+
+    pnlt_ip = np.interp(t_ip, t_observer, pnlt)
+
+    # Compute max. PNLT
+    pnltm = np.max(pnlt_ip)
+
+    # ICAO Annex 16 procedures (p132 - App. 2-18)
+    f_int = 10. ** (pnlt_ip / 10.)
+
+    D = 10 * np.log10(np.sum(f_int)) - pnltm - 10 * np.log10(20)
+
+    # Compute EPNL
+    ipnlt = pnltm + D
+
+    return ipnlt
+
+
+def compute_epnl(t_observer, pnlt, flag_epnl_bandshare, tonal_corrections=None):
+    """Compute effective perceived noise level.
+
+    Parameters
+    ----------
+    t_observer: np.ndarray
+        Observer time [s]
+    pnlt: np.ndarray
+        Perceived noise level, tone corrected [PNdB]
+    flag_epnl_bandshare : bool
+
+    C: np.ndarray, optional
+        Pnlt tone correction [dB]
+        
+    Returns
+    -------
+    float
+        epnl [EPNdB]
+    """
+    
+    # Interpolate time, pnlt and C
+    n_ip = np.int64(np.ceil((t_observer[-1]-t_observer[0])/0.5))
+
+    t_ip = np.zeros(n_ip)
+    for i in np.arange(n_ip):
+        t_ip[i] = t_observer[0] + i*0.5
+
+    pnlt_ip = np.interp(t_ip, t_observer, pnlt)
+
+    # Compute max. PNLT
+    pnltm = np.max(pnlt_ip)
+
+    # Check tone band-sharing
+    i_max = np.where(pnlt_ip == pnltm)[0][0]
+    if flag_epnl_bandshare:
+
+        C_ip = np.zeros((n_ip, tonal_corrections.shape[1]))
+        for j in np.arange(tonal_corrections.shape[1]):
+            C_ip[:,j] = np.interp(t_ip, t_observer, tonal_corrections[:,j])
+
+        if i_max == 0 or i_max == 1:
+            i_left_bandshare = 0
+        else:
+            i_left_bandshare = i_max-2
+
+        if i_max == np.shape(C_ip)[0]-1 or i_max == np.shape(C_ip)[0]-2:
+            i_right_bandshare = np.shape(C_ip)[0]
+        else:
+            i_right_bandshare = i_max + 3
+
+        C_bandshare = np.zeros(i_right_bandshare-i_left_bandshare)
+        for i, k in enumerate(np.arange(i_left_bandshare, i_right_bandshare)):
+            C_bandshare[i] = np.max(C_ip[k, :])
+
+        if C_bandshare[2] < np.mean(C_bandshare):
+            pnltm = pnltm - C_bandshare[2] + np.mean(C_bandshare)
+
+    # Compute max. PNLT point (k_m)
+    I = np.where(pnlt_ip > pnltm - 10.)
+
+    # ICAO Annex 16 procedures (p132 - App. 2-18)
+    f_int = 10. ** (pnlt_ip / 10.)
+
+    # Compute integration bounds
+    if pnltm > 10:
+        i_1 = I[0][0]
+        if np.abs(pnlt_ip[i_1] - (pnltm - 10)) > np.abs(pnlt_ip[i_1 - 1] - (pnltm - 10)):
+            i_1 = i_1 - 1
+
+        i_2 = I[0][-1]
+        if i_2 < pnlt_ip.shape[0] - 1:
+            if np.abs(pnlt_ip[i_2] - (pnltm - 10)) > np.abs(pnlt_ip[i_2 + 1] - (pnltm - 10)):
+                i_2 = i_2 + 1
+
+        D = 10 * np.log10(np.sum(f_int[i_1:i_2])) - pnltm - 10 * np.log10(20)
+
+    else:
+        D = 10 * np.log10(np.sum(f_int)) - pnltm - 10 * np.log10(20)
+
+    # Compute EPNL
+    epnl = pnltm + D
+
+    return epnl
