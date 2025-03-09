@@ -2,10 +2,11 @@ LICENSE.txt
 README.md
 pyproject.toml
 src/pyna/__init__.py
-src/pyna/compute_spl.py
+src/pyna/constants.py
 src/pyna/frequency_bands.py
-src/pyna/jet_source.py
+src/pyna/levels.py
 src/pyna/noise_tables.py
+src/pyna/propagation.py
 src/pyna/source.py
 src/pyna.egg-info/PKG-INFO
 src/pyna.egg-info/SOURCES.txt
@@ -13,5 +14,6 @@ src/pyna.egg-info/dependency_links.txt
 src/pyna.egg-info/requires.txt
 src/pyna.egg-info/top_level.txt
 tests/test_frequency_bands.py
-tests/test_jet_source.py
+tests/test_levels.py
 tests/test_noise_tables.py
+tests/test_source_noise.py
