@@ -3,4 +3,4 @@
 .pytest_cache/
 **/__pycache__/
 
-.run/
+run/

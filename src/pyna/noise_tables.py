@@ -546,10 +546,10 @@ class PropagationTables:
 
     def get_atmospheric_absorption(self, altitude, frequency):
 
-        if altitude < -200 or altitude > 60000:
+        if np.any(altitude < -200) or np.any(altitude > 60000):
             raise ValueError(f"Altitude = {altitude} m is outside the domain of the noise tables [-200., 6000.]m.")
 
-        if frequency < 37 or frequency > 12500:
+        if np.any(frequency < 37) or np.any(frequency > 12500):
             raise ValueError(f"Frequency = {frequency} Hz is outside the domain of the noise tables [37., 12500.]m.")
 
         return self._get_atmospheric_absorption(altitude, frequency)
@@ -599,6 +599,3 @@ class PerceivedNoiseTables:
 
     def get_noy_m_e(self, i_frequency_band):
         return self.data["noy_m_e"][i_frequency_band]
-
-        
-    
