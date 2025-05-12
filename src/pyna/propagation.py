@@ -25,7 +25,7 @@ def compute_propagation(
         distance_source_observer, 
         elevation_angle,
         density, 
-        speed_of_sound_average, 
+        average_speed_of_sound, 
         acoustic_impedance, 
         frequency, 
         n_frequency_subbands, 
@@ -54,7 +54,7 @@ def compute_propagation(
     distance_source_observer : float
     elevation_angle : float
     density : float
-    speed_of_sound_average : float
+    average_speed_of_sound : float
     acoustic_impedance : float
     frequency : float
     n_frequency_subbands : int
@@ -90,7 +90,7 @@ def compute_propagation(
             msap_sb *= np.exp(-2 * 0.115 * alpha_f * (distance_source_observer - _R_SOURCE))
 
         if flag_ground_effects:
-            msap_sb *= compute_ground_effects(distance_source_observer, elevation_angle, observer_position, speed_of_sound_average, density, frequency, n_frequency_subbands, ground_resistance, incoherence_constant)
+            msap_sb *= compute_ground_effects(distance_source_observer, elevation_angle, observer_position, average_speed_of_sound, density, frequency, n_frequency_subbands, ground_resistance, incoherence_constant)
                 
         # Compute absorbed msap by adding up the msap at all the sub-band frequencies
         # Source: Zorumski report 1982 part 1. Chapter 5.1 Equation 22
@@ -103,7 +103,7 @@ def compute_propagation(
     return msap_prop
 
 
-def compute_ground_effects(distance_source_observer, elevation_angle, observer_position, speed_of_sound_average, density, frequency, n_frequency_subbands, ground_resistance, incoherence_constant):
+def compute_ground_effects(distance_source_observer, elevation_angle, observer_position, average_speed_of_sound, density, frequency, n_frequency_subbands, ground_resistance, incoherence_constant):
     """
     Compute the ground reflection coefficients.
 
@@ -112,7 +112,7 @@ def compute_ground_effects(distance_source_observer, elevation_angle, observer_p
     distance_source_observer : float
     elevation_angle : float
     observer_position : np.ndarray
-    speed_of_sound_average : float
+    average_speed_of_sound : float
     density : float
     frequency : np.ndarray
     n_frequency_subbands : int
@@ -137,7 +137,7 @@ def compute_ground_effects(distance_source_observer, elevation_angle, observer_p
 
     # Compute wave number
     # Source: Zorumski report 1982 part 1. Chapter 3.2 page 1
-    k = 2 * np.pi * frequency_subbands / speed_of_sound_average
+    k = 2 * np.pi * frequency_subbands / average_speed_of_sound
 
     # Compute dimensionless frequency eta (note: for acoustically hard surface: eta = 0)
     # Source: Zorumski report 1982 part 1. Chapter 3.2 page 2
